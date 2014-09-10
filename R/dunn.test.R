@@ -1,7 +1,7 @@
-# version 1.1.0 August 23, 2014 by alexis.dinno@pdx.edu
+# version 1.2.0 September 8, 2014 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
-p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","bh","by")
+p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
 dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, alpha=0.05) {
 
@@ -10,15 +10,6 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   # kwallis.test: a custom Kruskal Wallis test function to support dunn.test
   # Note: does not currently play nicely with missing values.
   kwallis.test <- function(x=NA,g=NA,pass=0) {
-  
-    #save for output...
-    if((TRUE %in% is.na(g))) {
-      data <- deparse(substitute(x))
-      }
-    if(!(TRUE %in% is.na(g))) {
-      data <- paste(deparse(substitute(x))," and ",deparse(substitute(g)), sep="")
-      }
-  
     # FUNCTIONS
     # tiedranks: enumerates tied values from a vector of ranks
     # ranks: a vector of rank values
@@ -43,7 +34,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       }
 
     if (pass == 1) {
-      x <- x[[1]]
+#      x <- x[[1]]
       }
   
     #set up data by lists
@@ -64,7 +55,8 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
         }
       Data[,2] <- obs
       if (length(g) > 1) {
-        Data[,3] <- as.integer(factor(g))
+#        Data[,3] <- as.integer(factor(g))
+        Data[,3] <- g
         }
        else {
         Data[,3] <- group        
@@ -74,7 +66,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   
     #set up data by groups
     if (!is.list(x)) {
-      g <- as.integer(factor(g))
+#      g <- as.integer(factor(g))
       N <- length(x)
       Data <- matrix(NA,length(x),4)
       Data[,1] <- 1:length(x)
@@ -108,7 +100,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     p  <- pchisq(H,k-1,lower.tail=FALSE)
   
     #present output
-    output <- paste("\n  Kruskal-Wallis rank sum test\n\ndata: ",data,"\nKruskal-Wallis chi-squared = ",round(H,digits=4),", df = ",df,", p-value = ",round(p,digits=2),"\n\n" ,sep="")
+    output <- paste("Kruskal-Wallis chi-squared = ",round(H,digits=4),", df = ",df,", p-value = ",round(p,digits=2),"\n\n" ,sep="")
   
     invisible(list(output=output,H=H,df=df,p=p,N=N,Data=Data,data.name=data))
     }
@@ -147,7 +139,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       }
     return(ties)
     }
-
+  
   # tpad: returns the pad string, n times, defaulting to spaces
   # n: a number of replications; pad: string to replicate
   tpad <- function(n=1, pad=" ") {
@@ -178,9 +170,14 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   # p: a real p-value
   # returns: a formatted string
   pformat <- function(p) {
-     rightspaces <- 4
-     rightdigits <- substr(paste0(p,"000000000"),3,rightspaces+2)
-     return(paste0("0.",rightdigits))
+  	 if (p == 1) {
+  	   return("1.0000")
+  	   }
+  	  else {
+       rightspaces <- 4
+       rightdigits <- substr(paste0(sprintf("%1.4f",p),"000000000"),3,rightspaces+2)
+       return(paste0("0.",rightdigits))
+       }
     }
 
   # centertext: centers a string within a specific width
@@ -200,7 +197,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
   # dunntestheader: displays Dunn's test table headers.
   dunntestheader <- function(groupvar,colstart,colstop) {
-    cat("\nRow Mean-|\nCol Mean |")
+    cat("Row Mean-|\nCol Mean |")
     groupvalues  <- levels(factor(groupvar))
     for (col in colstart:colstop) {
       vallab  <- substr(groupvalues[col],1,8)
@@ -254,81 +251,121 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       }
     }
 
-  # VALIDATIONS
-
+  # VALIDATIONS & PREPARATIONS
+  # names for output
+  xname <- paste(if(is.name(substitute(x))) {deparse(substitute(x))} else {"x"})
+  gname <- paste(if(is.name(substitute(g))) {deparse(substitute(g))} else {"group"})
+  xaslist <- is.list(x)
+  tempg <- 1:length(x)
+  
+  # casewise deletion of missing data
+  if (length(g) > 1) {
+  	if (label==TRUE) {
+  	  if (is.factor(g)) {
+        glevels <- levels(g)
+        }
+       else {
+        glevels <- unique(g)
+        }
+      }
+     else {
+      glevels <- names(table(addNA(g, ifany = TRUE)))
+      }
+    Data <- data.frame(cbind(x,g))
+    Data <- Data[!is.na(unlist(Data$x)),]
+    Data <- Data[!is.na(Data$g),]
+    x <- as.numeric(factor(Data$x))
+    g <- factor(Data$g)
+    levels(g) <- glevels
+    }
+   else {
+   	g <- c()
+   	for (i in 1:length(x)) {
+   	  for (j in 1:length(x[[i]])) {
+   	    g <- c(g,i)
+   	    }
+   	  }
+    x <- as.numeric(unlist(x)[!is.na(unlist(x))])
+    }
   # validate method
   if (length(method) > 1) {
     method <- "none"
     }
     
-  if (tolower(method) != "none" & tolower(method) != "bonferroni" & tolower(method) != "sidak" & tolower(method) != "holm" & tolower(method) != "hs" & tolower(method) != "bh" & tolower(method) != "by") {
+  if (tolower(method) != "none" & tolower(method) != "bonferroni" & tolower(method) != "sidak" & tolower(method) != "holm" & tolower(method) != "hs" & tolower(method) != "hochberg" & tolower(method) != "bh" & tolower(method) != "by") {
     stop("method must be one of: none, bonferroni, sidak, hs, bh, or by")
     }
 
   if (tolower(method)=="none") {
-    Name <- "No adjustment"
+    Name <- "(No adjustment)"
     }
   if (tolower(method)=="bonferroni") {
-    Name <- "Bonferroni"
+    Name <- "(Bonferroni)"
     }
   if (tolower(method)=="sidak") {
-    Name <- "\u0160id\u00E1k"
+    Name <- "(\u0160id\u00E1k)"
     }
   if (tolower(method)=="holm") {
-    Name <- "Holm"
+    Name <- "(Holm)"
     }
   if (tolower(method)=="hs") {
-    Name <- "Holm-\u0160id\u00E1k"
+    Name <- "(Holm-\u0160id\u00E1k)"
+    }
+  if (tolower(method)=="hochberg") {
+    Name <- "(Hochberg)"
     }
   if (tolower(method)=="bh") {
-    Name <- "Benjamini-Hochberg"
+    Name <- "(Benjamini-Hochberg)"
     }
   if (tolower(method)=="by") {
-    Name <- "Benjamini-Yekuteili"
+    Name <- "(Benjamini-Yekuteili)"
     }
 
-    # validate that x is a numeric vector of data values, or a list of numeric 
-    # data vectors, and is not NA
-    if (TRUE %in% is.na(unlist(x)) | !is.vector(unlist(x), mode="numeric") ) {
-      stop("x must contain a numeric vector of data values, or a list of numeric data vectors.")
-      }
-    # validate that g is not missing if x is a list
-    if (!is.list(x) & TRUE %in% is.na(g) ) {
-      stop("when specifying x as a vector, you must include g.")
-      }
-    # validate that g is not NA
-    if (length(g) > 1 & TRUE %in% is.na(g)) {
-      stop("g must have no missing values.")
-      }
-    # validate that g is factor or vector.
-    if (length(g) > 1 & ( !is.factor(g) & !is.vector(g) ) ) {
-    	
+  # validate that x is longer than 1
+  if (length(unlist(x))==1) {
+    stop("too few observations in x.")
+    }
+  # validate that x is a numeric vector of data values, or a list of numeric 
+  # data vectors, and is not NA
+  if (TRUE %in% is.na(unlist(x)) | !is.vector(unlist(x), mode="numeric") ) {
+    stop("x must contain a numeric vector of data values, or a list of numeric data vectors.")
+    }
+  # validate that g is not missing if x is a vector
+  if (!xaslist & TRUE %in% is.na(g) ) {
+    stop("when specifying x as a vector, you must include g.")
+    }
+  # validate that g is not NA
+  if (length(g) > 1 & TRUE %in% is.na(g)) {
+    stop("g must have no missing values.")
+    }
+  # validate that g is factor or vector.
+  if (length(g) > 1 & ( !is.factor(g) & !is.vector(g) ) ) {
+  	
+    stop("g must be a factor, character vector, or integer vector.")
+    }
+  # validate that g is a vector of mode = character or mode = integer.
+  if (length(g) > 1 & is.vector(g) ) {
+    if ( !is.vector(g, mode="character") & !all.integers(g) ) {
       stop("g must be a factor, character vector, or integer vector.")
       }
-    # validate that g is a vector of mode = character or mode = integer.
-    if (length(g) > 1 & is.vector(g) ) {
-      if ( !is.vector(g, mode="character") & !all.integers(g) ) {
-        stop("g must be a factor, character vector, or integer vector.")
-        }
-      }
+    }
 
   # CALCULATIONS
-  if (is.list(x) & (TRUE %in% is.na(g))) {
-    kwallis <- paste("kwallis.test(x=",deparse(substitute(x)),", pass=1) -> out")
+  out <- NULL
+  if (xaslist & length(g)==1) {
+    kwallis.test(x, 1:length(x), pass=1) -> out
     }
-  if (length(g)>1 & is.list(x)) {
-    kwallis <- paste("kwallis.test(x=",deparse(substitute(x)),",g=",deparse(substitute(g)),", pass=1) -> out")
+  if (length(g)>1 & xaslist) {
+    kwallis.test(x, g, pass=1) -> out
     }
-  if (length(g)>1 & !is.list(x)) {
-    kwallis <- paste("kwallis.test(x=",deparse(substitute(x)),",g=",deparse(substitute(g)),", pass=0) -> out")
+  if (length(g)>1 & !xaslist) {
+    kwallis.test(x, g, pass=0) -> out
     }
-  
-  out=NULL
-  eval(parse(text=kwallis))
+
   if (kw==TRUE) {
+  	cat("  Kruskal-Wallis rank sum test\n\ndata: ",xname," and ",gname,"\n",sep="")
     cat(out$output)
     }
-    
     chi2 <- out$H
     df   <- out$df
     p    <- out$p
@@ -348,7 +385,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     for (s in 1:r) {
       tau <- sum(ranks==ties[s])
       tiesadj <- tiesadj + (tau^(3) - tau)
-         }
+      }
     }
   tiesadj <- tiesadj/(12*(N-1))
 
@@ -361,15 +398,19 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       row <- c(row,rep(i,(k-i)))
       col <- c(col,(i+1):k)
       }
-  for (i in 1:m) {
-    nr <- sum(Data[,3]==row[i])
-    nc <- sum(Data[,3]==col[i])
-    Y[i] <- (sum(Data[,4][Data[,3]==row[i]])/nr) - (sum(Data[,4][Data[,3]==col[i]])/nc)
-    Sigma[i] <- sqrt( ((N*(N+1)/12) - tiesadj) * (1/nr + 1/nc) )
+  Z <- rep(0,m)
+  for (i in 2:k) {
+    for (j in 1:(i-1)) {
+      ni <- sum(Data[,3]==i)
+      nj <- sum(Data[,3]==j)
+      meanranki <- mean(Data[,4][Data[,3]==i])
+      meanrankj <- mean(Data[,4][Data[,3]==j])
+      z <- (meanrankj - meanranki) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+      index <- ((i-2)*(i-1)/2) + j
+      Z[index] <- z
+      }
     }
-  Z <- Y/Sigma
   P <- pnorm(abs(Z),lower.tail=FALSE)
-
   #calculatye adjusted p-values based on method argument
   Reject <- rep(0,m)
   # No adjustment for multiple comparisons
@@ -420,6 +461,24 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     P.adjust <- Psort[1,]
     Reject <- Psort[3,]
     }
+  # Control FWER using Hochberg
+  if (tolower(c(method))=="hochberg") {
+    Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
+    Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
+    for (i in 1:m) {
+      adjust <- i
+      Psort[1,i] <- min(1,Psort[1,i]*adjust)
+      if (i==1) {
+        Psort[3,i] <- Psort[1,i] <= alpha/2
+        }
+       else {
+         Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
+         }
+      }
+    Psort <- Psort[,order(Psort[2,])]
+    P.adjust <- Psort[1,]
+    Reject <- Psort[3,]
+    }
   # Control FDR using Benjamini-Hochberg
   if (tolower(c(method))=="bh") {
     Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
@@ -443,10 +502,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
     Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
     for (i in 1:m) {
-      adjust <- (m/(m+1-i))
+      adjust <- (m/(m+1-i))*sum(1/(1:m))
       Psort[1,i] <- min(1,Psort[1,i]*adjust)
       if (i==1) {
-        Psort[3,i] <- Psort[1,i] <= (alpha/2)/sum(1:(m-i+1)) # reverse sorted, so m-i+1, rather than i
+        Psort[3,i] <- Psort[1,i] <= (alpha/2) # reverse sorted, so m-i+1, rather than i
         }
        else {
          Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
@@ -457,14 +516,13 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     Reject <- Psort[3,]
     }
 
-
   # OUTPUT
   cat("\n")
   if ((TRUE %in% is.na(g))) {
-    title <- paste("Comparison of ",deparse(substitute(x))," across ",k," groups",sep="")
+    title <- paste("Comparison of ",xname," across ",k," groups",sep="")
     }
    else {
-    title <- paste("Comparison of ",deparse(substitute(x))," by ",deparse(substitute(g)),sep="")
+    title <- paste("Comparison of ",xname," by ",gname,sep="")
     }
   cat(centertext(title))
   cat(centertext(Name))
@@ -473,12 +531,13 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   reps      <- floor((k-1)/6)
   laststart <- k - k%%6 + 1
   kminusone <- k - 1
-  if (label==FALSE) {
-    g <- as.numeric(g)
-    }
-  if (TRUE %in% is.na(g)) {
+#  if (label==FALSE) {
+#    g <- as.numeric(g)
+#    }
+  if (length(g)==1) {
     g <- 1:k
     }
+
   # Replication loop for >7 groups, no wrap
   if (wrap==FALSE) {
     if (k > 7) {
@@ -490,10 +549,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
         for (i in 2:k) {
           dunntestztable(g,i,Z,colstart,colstop)
           if (i < k) {
-            dunntestptable(i,P,colstart,colstop,Reject,0)
+            dunntestptable(i,P.adjust,colstart,colstop,Reject,0)
             }
            else {
-            dunntestptable(i,P,colstart,colstop,Reject,1)
+            dunntestptable(i,P.adjust,colstart,colstop,Reject,1)
             }
           }
         }
@@ -505,10 +564,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
         for (i in 2:k) {
           dunntestztable(g,i,Z,laststart,kminusone) 
           if (i < k) {
-            dunntestptable(i,P,laststart,kminusone,Reject,0)
+            dunntestptable(i,P.adjust,laststart,kminusone,Reject,0)
             }
            else {
-            dunntestptable(i,P,laststart,kminusone,Reject,1)
+            dunntestptable(i,P.adjust,laststart,kminusone,Reject,1)
             }
           }
         }
@@ -522,10 +581,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
         colstop <- i-1
         dunntestztable(g,i,Z,1,colstop) 
         if (i < k) {
-          dunntestptable(i,P,1,colstop,Reject,0)
+          dunntestptable(i,P.adjust,1,colstop,Reject,0)
           }
          else {
-          dunntestptable(i,P,1,colstop,Reject,1)
+          dunntestptable(i,P.adjust,1,colstop,Reject,1)
           }
         }
       }
@@ -539,10 +598,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       colstop <- i-1
       dunntestztable(g,i,Z,1,colstop) 
       if (i < k) {
-        dunntestptable(i,P,1,colstop,Reject,0)
+        dunntestptable(i,P.adjust,1,colstop,Reject,0)
         }
        else {
-        dunntestptable(i,P,1,colstop,Reject,1)
+        dunntestptable(i,P.adjust,1,colstop,Reject,1)
         }
       }
     }

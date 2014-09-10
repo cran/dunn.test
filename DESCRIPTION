@@ -1,6 +1,6 @@
 Package: dunn.test
-Version: 1.1.0
-Date: 2014-08-23
+Version: 1.2.0
+Date: 2014-09-08
 Title: Dunn's test of multiple comparisons using rank sums
 Author: Alexis Dinno <alexis.dinno@pdx.edu>
 Maintainer: Alexis Dinno <alexis.dinno@pdx.edu>
@@ -8,7 +8,7 @@ Description: dunn.test computes Dunn's test (1964) for stochastic dominance and 
 License: GPL-2
 LazyData: no
 Encoding: UTF-8
-Packaged: 2014-08-24 22:12:01 UTC; Alexis
+Packaged: 2014-09-09 06:20:03 UTC; Alexis
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2014-08-25 01:00:40
+Date/Publication: 2014-09-10 07:04:13
