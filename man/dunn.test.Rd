@@ -25,6 +25,8 @@ p.adjustment.methods
 }
 \details{\code{dunn.test} computes Dunn's test (1964) for stochastic dominance and reports the results among multiple pairwise comparisons after a Kruskal-Wallis test for stochastic dominance among \emph{k} groups (Kruskal and Wallis, 1952).  The interpretation of stochastic dominance requires an assumption that the \acronym{CDF} of one group does not cross the \acronym{CDF} of the other.  \code{dunn.test} makes \emph{m} = \emph{k}(\emph{k}-1)/2 multiple pairwise comparisons based on Dunn's \emph{z}-test-statistic approximations to the actual rank statistics.  The null hypothesis for each pairwise comparison is that the probability of observing a randomly selected value from the first group that is larger than a randomly selected value from the second group equals one half; this null hypothesis corresponds to that of the Wilcoxon-Mann-Whitney rank-sum test.  Like the rank-sum test, if the data can be assumed to be continuous, and the distributions are assumed identical except for a difference in location, Dunn's test may be understood as a test for median difference.  \code{dunn.test} accounts for tied ranks.  
 
+\code{dunn.test} outputs both \emph{z}-test-statistics for each pairwise comparison and the \emph{p}-value = P(\emph{Z}>|\emph{z}|) for each.
+
 Several options are available to adjust \emph{p}-values for multiple comparisons, including methods to control the family-wise error rate (\acronym{FWER}) and methods to control the false discovery rate (\acronym{FDR}):
 
 \code{"none"} no adjustment is made.  
