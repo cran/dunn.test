@@ -49,12 +49,13 @@ Because the sequential step-up/step-down tests rejection decisions depend on bot
 }
 \value{
 \code{dunn.test} returns:
+ \item{chi2}{a scalar of the Kruskal-Wallis test statistic adjusted for ties.}
  \item{Z}{a vector of all \emph{m} of Dunn's \emph{z} test statistics}
  \item{P}{a vector of \emph{p}-values corresponding to \code{Z}.}
  \item{P.adjust}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}).}
 }
 \author{
-Alexis Dinno (\email{alexis.  dinno@pdx.  edu})
+Alexis Dinno (\email{alexis.dinno@pdx.edu})
 }
 \references{
 Benjamini, Y.  and Hochberg, Y.  1995.  \dQuote{Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing.} \emph{Journal of the Royal Statistical Society.  Series B (Methodological)}.  57: 289--300.  

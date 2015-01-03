@@ -1,4 +1,4 @@
-# version 1.2.0 September 8, 2014 by alexis.dinno@pdx.edu
+# version 1.2.2 December 23, 2014 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
@@ -608,5 +608,5 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     
   cat("\n")
     
-  invisible(list(Z=Z,P=P,P.adjusted=P.adjust))
+  invisible(list(chi2=chi2,Z=Z,P=P,P.adjusted=P.adjust))
   }
