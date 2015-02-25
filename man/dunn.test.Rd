@@ -9,7 +9,7 @@
 \description{Performs Dunn's test of multiple comparisons using rank sums}
 \usage{
 dunn.test  (x, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, 
-      wrap=FALSE, alpha=0.05)
+      wrap=FALSE, rmc=FALSE, alpha=0.05)
 
 p.adjustment.methods
 # c("none", "bonferroni", "sidak", "holm", "hs", "hochberg", "bh", "by")
@@ -21,6 +21,7 @@ p.adjustment.methods
  \item{kw}{if \option{TRUE} then the results of the Kruskal-Wallis test are reported.}
  \item{label}{if \option{TRUE} then the factor labels are used in the output table.}
  \item{wrap}{does not break up tables to maintain nicely formatted output.  If \option{FALSE} then output of large tables is broken up across multiple pages.}
+ \item{rmc}{if \option{TRUE} then the reported test statistics and table are based on row minus column, rather than the default column minus row (i.e. the signs of the test statistic are flipped).}
  \item{alpha}{the nominal level of significance used in the step-up/step-down multiple comparisons procedures (Holm, Holm-\enc{Šidák}{Sidak}, Hochberg, Benjamini-Hochberg, and Benjamini-Yekutieli).}
 }
 \details{\code{dunn.test} computes Dunn's test (1964) for stochastic dominance and reports the results among multiple pairwise comparisons after a Kruskal-Wallis test for stochastic dominance among \emph{k} groups (Kruskal and Wallis, 1952).  The interpretation of stochastic dominance requires an assumption that the \acronym{CDF} of one group does not cross the \acronym{CDF} of the other.  \code{dunn.test} makes \emph{m} = \emph{k}(\emph{k}-1)/2 multiple pairwise comparisons based on Dunn's \emph{z}-test-statistic approximations to the actual rank statistics.  The null hypothesis for each pairwise comparison is that the probability of observing a randomly selected value from the first group that is larger than a randomly selected value from the second group equals one half; this null hypothesis corresponds to that of the Wilcoxon-Mann-Whitney rank-sum test.  Like the rank-sum test, if the data can be assumed to be continuous, and the distributions are assumed identical except for a difference in location, Dunn's test may be understood as a test for median difference.  \code{dunn.test} accounts for tied ranks.  

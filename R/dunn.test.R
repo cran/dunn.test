@@ -1,9 +1,9 @@
-# version 1.2.2 December 23, 2014 by alexis.dinno@pdx.edu
+# version 1.2.3 February 24, 2015 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
-dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, alpha=0.05) {
+dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, rmc=FALSE, alpha=0.05) {
 
   # FUNCTIONS
 
@@ -197,7 +197,12 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
   # dunntestheader: displays Dunn's test table headers.
   dunntestheader <- function(groupvar,colstart,colstop) {
-    cat("Row Mean-|\nCol Mean |")
+  	if (rmc==FALSE) {
+      cat("Col Mean-|\nRow Mean |")
+  	  }
+  	 else {
+      cat("Row Mean-|\nCol Mean |")
+      }
     groupvalues  <- levels(factor(groupvar))
     for (col in colstart:colstop) {
       vallab  <- substr(groupvalues[col],1,8)
@@ -405,7 +410,12 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       nj <- sum(Data[,3]==j)
       meanranki <- mean(Data[,4][Data[,3]==i])
       meanrankj <- mean(Data[,4][Data[,3]==j])
-      z <- (meanrankj - meanranki) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+      if (rmc==FALSE) {
+        z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+        }
+       else {
+        z <- (meanrankj - meanranki) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+        }
       index <- ((i-2)*(i-1)/2) + j
       Z[index] <- z
       }
