@@ -1,4 +1,4 @@
-# version 1.2.3 February 24, 2015 by alexis.dinno@pdx.edu
+# version 1.2.4 April 24, 2015 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
@@ -196,7 +196,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
 
   # dunntestheader: displays Dunn's test table headers.
-  dunntestheader <- function(groupvar,colstart,colstop) {
+  dunntestheader <- function(groupvar,colstart,colstop,rmc) {
   	if (rmc==FALSE) {
       cat("Col Mean-|\nRow Mean |")
   	  }
@@ -541,9 +541,9 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   reps      <- floor((k-1)/6)
   laststart <- k - k%%6 + 1
   kminusone <- k - 1
-#  if (label==FALSE) {
-#    g <- as.numeric(g)
-#    }
+  if (label==FALSE) {
+    g <- as.numeric(g)
+    }
   if (length(g)==1) {
     g <- 1:k
     }
@@ -554,9 +554,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       for (rep in 1:reps) {
         colstart <- (6*rep)-5
         colstop  <- 6*rep
-        dunntestheader(g,colstart,colstop)
+        dunntestheader(g,colstart,colstop,rmc)
         # Table body
-        for (i in 2:k) {
+        for (i in (colstart+1):k) {
+          colstop <- min(i-1,6*rep)
           dunntestztable(g,i,Z,colstart,colstop)
           if (i < k) {
             dunntestptable(i,P.adjust,colstart,colstop,Reject,0)
@@ -568,10 +569,9 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
         }
       # End of table
       if (laststart < k) {
-        dunntestheader(g,laststart,kminusone)
-        
+        dunntestheader(g,laststart,kminusone,rmc)
         # Table body
-        for (i in 2:k) {
+        for (i in (laststart+1):k) {
           dunntestztable(g,i,Z,laststart,kminusone) 
           if (i < k) {
             dunntestptable(i,P.adjust,laststart,kminusone,Reject,0)
@@ -585,7 +585,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
     # Replication loop for <=7 groups
     if (k <= 7) {
-      dunntestheader(g,1,kminusone)
+      dunntestheader(g,1,kminusone,rmc)
       # Table body
       for (i in 2:k) {
         colstop <- i-1
@@ -602,7 +602,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
   # Replication loop for >7 groups, with wrap
   if (wrap==TRUE) {
-    dunntestheader(g,1,kminusone)
+    dunntestheader(g,1,kminusone,rmc)
     # Table body
     for (i in 2:k) {
       colstop <- i-1
