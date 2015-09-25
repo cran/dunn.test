@@ -9,7 +9,7 @@
 \description{Performs Dunn's test of multiple comparisons using rank sums}
 \usage{
 dunn.test  (x, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, 
-      wrap=FALSE, rmc=FALSE, alpha=0.05)
+      wrap=FALSE, table=TRUE, list=FALSE, rmc=FALSE, alpha=0.05)
 
 p.adjustment.methods
 # c("none", "bonferroni", "sidak", "holm", "hs", "hochberg", "bh", "by")
@@ -21,6 +21,8 @@ p.adjustment.methods
  \item{kw}{if \option{TRUE} then the results of the Kruskal-Wallis test are reported.}
  \item{label}{if \option{TRUE} then the factor labels are used in the output table.}
  \item{wrap}{does not break up tables to maintain nicely formatted output.  If \option{FALSE} then output of large tables is broken up across multiple pages.}
+ \item{table}{outputs results of Dunn's test in a table format, as qualified by the \code{label} and \code{wrap} options.}
+ \item{list}{outputs results of Dunn's test in a list format.}
  \item{rmc}{if \option{TRUE} then the reported test statistics and table are based on row minus column, rather than the default column minus row (i.e. the signs of the test statistic are flipped).}
  \item{alpha}{the nominal level of significance used in the step-up/step-down multiple comparisons procedures (Holm, Holm-\enc{Šidák}{Sidak}, Hochberg, Benjamini-Hochberg, and Benjamini-Yekutieli).}
 }
@@ -51,19 +53,20 @@ Because the sequential step-up/step-down tests rejection decisions depend on bot
 \value{
 \code{dunn.test} returns:
  \item{chi2}{a scalar of the Kruskal-Wallis test statistic adjusted for ties.}
- \item{Z}{a vector of all \emph{m} of Dunn's \emph{z} test statistics}
+ \item{Z}{a vector of all \emph{m} of Dunn \emph{z} test statistics.}
  \item{P}{a vector of \emph{p}-values corresponding to \code{Z}.}
  \item{P.adjust}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}).}
-}
+ \item{comparisons}{a vector of strings labeling each pairwise comparison, as qualified by the \code{rmc} option, using either the variable values, or the factor labels or (or factor values if unlabeled). These labels match the corresponding position in the \code{Z}, \code{P}, and \code{P.adjust} vectors.}
+ }
 \author{
 Alexis Dinno (\email{alexis.dinno@pdx.edu})
 }
 \references{
-Benjamini, Y.  and Hochberg, Y.  1995.  \dQuote{Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing.} \emph{Journal of the Royal Statistical Society.  Series B (Methodological)}.  57: 289--300.  
+Benjamini, Y. and Hochberg, Y.  1995.  \dQuote{Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing.} \emph{Journal of the Royal Statistical Society.  Series B (Methodological)}.  57: 289--300.  
 
 Benjamini, Y.  and Yekutieli, D.  2001.  \dQuote{The control of the false discovery rate in multiple testing under dependency.} \emph{Annals of Statistics}.  29: 1165--1188.  
 
-Dunn, O.  J.  1961.  \dQuote{Multiple comparisons among means.} \emph{Journal of the American Statistical Association}.  56: 52--64.  
+Dunn, O.  J.  1961.  \dQuote{Multiple comparisons among means.}  \emph{Journal of the American Statistical Association}.  56: 52--64.  
 
 Dunn, O.  J.  1964.  \dQuote{Multiple comparisons using rank sums}.  \emph{Technometrics}.  6: 241--252.  
 
@@ -71,7 +74,7 @@ Hochberg, Y.  1988.  \dQuote{A sharper Bonferroni procedure for multiple tests o
 
 Holm, S.  1979.  \dQuote{A simple sequentially rejective multiple test procedure}.  \emph{Scandinavian Journal of Statistics}.  6: 65--70.  
 
-Kruskal, W.  H.  and Wallis, A.  1952.  \dQuote{Use of ranks in one-criterion variance analysis}.  \emph{Journal of the American Statistical Association}.  47: 583--621.  
+Kruskal, W.  H. and Wallis, A.  1952.  \dQuote{Use of ranks in one-criterion variance analysis}.  \emph{Journal of the American Statistical Association}.  47: 583--621.  
 
 \enc{Šidák}{Sidak}, Z.  1967.  \dQuote{Rectangular confidence regions for the means of multivariate normal distributions}.  \emph{Journal of the American Statistical Association}.  62: 626--633.  
 }
@@ -96,7 +99,7 @@ dunn.test(x, g)
 ## Example based on home care data from Dunn (1964)
 data(homecare)
 attach(homecare)
-dunn.test(occupation,eligibility, method="hs")
+dunn.test(occupation, eligibility, method="hs", list=TRUE)
 
 ## Air quality data set illustrates differences in different
 ## multiple comparisons adjustments

@@ -1,9 +1,9 @@
-# version 1.2.4 April 24, 2015 by alexis.dinno@pdx.edu
+# version 1.3.0 September 23, 2015 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
-dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, rmc=FALSE, alpha=0.05) {
+dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, table=TRUE, list=FALSE, rmc=FALSE, alpha=0.05) {
 
   # FUNCTIONS
 
@@ -170,10 +170,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   # p: a real p-value
   # returns: a formatted string
   pformat <- function(p) {
-  	 if (p == 1) {
-  	   return("1.0000")
-  	   }
-  	  else {
+     if (p == 1) {
+       return("1.0000")
+       }
+      else {
        rightspaces <- 4
        rightdigits <- substr(paste0(sprintf("%1.4f",p),"000000000"),3,rightspaces+2)
        return(paste0("0.",rightdigits))
@@ -197,10 +197,10 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
   # dunntestheader: displays Dunn's test table headers.
   dunntestheader <- function(groupvar,colstart,colstop,rmc) {
-  	if (rmc==FALSE) {
+    if (rmc==FALSE) {
       cat("Col Mean-|\nRow Mean |")
-  	  }
-  	 else {
+      }
+     else {
       cat("Row Mean-|\nCol Mean |")
       }
     groupvalues  <- levels(factor(groupvar))
@@ -265,8 +265,8 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   
   # casewise deletion of missing data
   if (length(g) > 1) {
-  	if (label==TRUE) {
-  	  if (is.factor(g)) {
+    if (label==TRUE) {
+      if (is.factor(g)) {
         glevels <- levels(g)
         }
        else {
@@ -284,12 +284,12 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     levels(g) <- glevels
     }
    else {
-   	g <- c()
-   	for (i in 1:length(x)) {
-   	  for (j in 1:length(x[[i]])) {
-   	    g <- c(g,i)
-   	    }
-   	  }
+     g <- c()
+     for (i in 1:length(x)) {
+       for (j in 1:length(x[[i]])) {
+         g <- c(g,i)
+         }
+       }
     x <- as.numeric(unlist(x)[!is.na(unlist(x))])
     }
   # validate method
@@ -345,7 +345,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
   # validate that g is factor or vector.
   if (length(g) > 1 & ( !is.factor(g) & !is.vector(g) ) ) {
-  	
+    
     stop("g must be a factor, character vector, or integer vector.")
     }
   # validate that g is a vector of mode = character or mode = integer.
@@ -368,7 +368,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
 
   if (kw==TRUE) {
-  	cat("  Kruskal-Wallis rank sum test\n\ndata: ",xname," and ",gname,"\n",sep="")
+    cat("  Kruskal-Wallis rank sum test\n\ndata: ",xname," and ",gname,"\n",sep="")
     cat(out$output)
     }
     chi2 <- out$H
@@ -394,15 +394,17 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
   tiesadj <- tiesadj/(12*(N-1))
 
-    # Generate differences in mean ranks, standard deviation of same, and z statistic
-    Y      <- rep(NA,m)
-    Sigma  <- rep(NA,m)
-    row    <- c()
-    col    <- c()
-    for (i in 1:(k-1)) {
-      row <- c(row,rep(i,(k-i)))
-      col <- c(col,(i+1):k)
-      }
+  # Generate differences in mean ranks, standard deviation of same, and z statistic
+  Y      <- rep(NA,m)
+  Sigma  <- rep(NA,m)
+  row    <- c()
+  col    <- c()
+  for (i in 1:(k-1)) {
+    row <- c(row,rep(i,(k-i)))
+    col <- c(col,(i+1):k)
+    }
+
+  # Calculate approximate Z test statistics
   Z <- rep(0,m)
   for (i in 2:k) {
     for (j in 1:(i-1)) {
@@ -420,6 +422,8 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       Z[index] <- z
       }
     }
+    
+  # Calculate p-values for Z statistics, and adjust as needed
   P <- pnorm(abs(Z),lower.tail=FALSE)
   #calculatye adjusted p-values based on method argument
   Reject <- rep(0,m)
@@ -528,63 +532,83 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
   # OUTPUT
   cat("\n")
-  if ((TRUE %in% is.na(g))) {
-    title <- paste("Comparison of ",xname," across ",k," groups",sep="")
-    }
-   else {
-    title <- paste("Comparison of ",xname," by ",gname,sep="")
-    }
-  cat(centertext(title))
-  cat(centertext(Name))
-
-  # Need to determine how many tables (reps) to output
-  reps      <- floor((k-1)/6)
-  laststart <- k - k%%6 + 1
-  kminusone <- k - 1
-  if (label==FALSE) {
-    g <- as.numeric(g)
-    }
-  if (length(g)==1) {
-    g <- 1:k
+  if (table==TRUE | list==TRUE) {
+    if ((TRUE %in% is.na(g))) {
+      title <- paste("Comparison of ",xname," across ",k," groups",sep="")
+      }
+     else {
+      title <- paste("Comparison of ",xname," by ",gname,sep="")
+      }
+    cat(centertext(title))
+    cat(centertext(Name))
     }
 
-  # Replication loop for >7 groups, no wrap
-  if (wrap==FALSE) {
-    if (k > 7) {
-      for (rep in 1:reps) {
-        colstart <- (6*rep)-5
-        colstop  <- 6*rep
-        dunntestheader(g,colstart,colstop,rmc)
-        # Table body
-        for (i in (colstart+1):k) {
-          colstop <- min(i-1,6*rep)
-          dunntestztable(g,i,Z,colstart,colstop)
-          if (i < k) {
-            dunntestptable(i,P.adjust,colstart,colstop,Reject,0)
+  if (table==TRUE) {
+    # Need to determine how many tables (reps) to output
+    reps      <- floor((k-1)/6)
+    laststart <- k - k%%6 + 1
+    kminusone <- k - 1
+    if (label==FALSE) {
+      g <- as.numeric(g)
+      }
+    if (length(g)==1) {
+      g <- 1:k
+      }
+  
+    # Replication loop for >7 groups, no wrap
+    if (wrap==FALSE) {
+      if (k > 7) {
+        for (rep in 1:reps) {
+          colstart <- (6*rep)-5
+          colstop  <- 6*rep
+          dunntestheader(g,colstart,colstop,rmc)
+          # Table body
+          for (i in (colstart+1):k) {
+            colstop <- min(i-1,6*rep)
+            dunntestztable(g,i,Z,colstart,colstop)
+            if (i < k) {
+              dunntestptable(i,P.adjust,colstart,colstop,Reject,0)
+              }
+             else {
+              dunntestptable(i,P.adjust,colstart,colstop,Reject,1)
+              }
             }
-           else {
-            dunntestptable(i,P.adjust,colstart,colstop,Reject,1)
+          }
+        # End of table
+        if (laststart < k) {
+          dunntestheader(g,laststart,kminusone,rmc)
+          # Table body
+          for (i in (laststart+1):k) {
+            dunntestztable(g,i,Z,laststart,kminusone) 
+            if (i < k) {
+              dunntestptable(i,P.adjust,laststart,kminusone,Reject,0)
+              }
+             else {
+              dunntestptable(i,P.adjust,laststart,kminusone,Reject,1)
+              }
             }
           }
         }
-      # End of table
-      if (laststart < k) {
-        dunntestheader(g,laststart,kminusone,rmc)
+  
+      # Replication loop for <=7 groups
+      if (k <= 7) {
+        dunntestheader(g,1,kminusone,rmc)
         # Table body
-        for (i in (laststart+1):k) {
-          dunntestztable(g,i,Z,laststart,kminusone) 
+        for (i in 2:k) {
+          colstop <- i-1
+          dunntestztable(g,i,Z,1,colstop) 
           if (i < k) {
-            dunntestptable(i,P.adjust,laststart,kminusone,Reject,0)
+            dunntestptable(i,P.adjust,1,colstop,Reject,0)
             }
            else {
-            dunntestptable(i,P.adjust,laststart,kminusone,Reject,1)
+            dunntestptable(i,P.adjust,1,colstop,Reject,1)
             }
           }
         }
       }
-
-    # Replication loop for <=7 groups
-    if (k <= 7) {
+  
+    # Replication loop for >7 groups, with wrap
+    if (wrap==TRUE) {
       dunntestheader(g,1,kminusone,rmc)
       # Table body
       for (i in 2:k) {
@@ -598,25 +622,50 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
           }
         }
       }
+      
+    cat("\n")
     }
 
-  # Replication loop for >7 groups, with wrap
-  if (wrap==TRUE) {
-    dunntestheader(g,1,kminusone,rmc)
-    # Table body
+  # Output pairwise comparisons as list if requested.
+  if (list==TRUE) {
+    groupvalues  <- levels(factor(g))
+    stringlength <- 2*max(nchar(groupvalues)) + 4
+    
+    # Output list header
+    cat("\nList of pairwise comparisons: Z statistic (p-value)")
+    cat("\n---------------------------------------------------\n")
+    index <- 0
     for (i in 2:k) {
-      colstop <- i-1
-      dunntestztable(g,i,Z,1,colstop) 
-      if (i < k) {
-        dunntestptable(i,P.adjust,1,colstop,Reject,0)
+      for (j in 1:(i-1)) {
+        index <- index + 1
+          buffer <- stringlength - (nchar(groupvalues[i]) + nchar(groupvalues[j]) + 4) - 2
+        if (rmc==FALSE) {
+          cat(groupvalues[j]," - ",groupvalues[i],paste(rep(" ",buffer))," :\t",zformat(Z[index]), " (",pformat(P.adjust[index]),")\n", sep="")
+          }
+        if (rmc==TRUE) {
+          cat(groupvalues[i]," - ",groupvalues[j],paste(rep(" ",buffer))," :\t",zformat(Z[index]), " (",pformat(P.adjust[index]),")\n", sep="")
+          }
         }
-       else {
-        dunntestptable(i,P.adjust,1,colstop,Reject,1)
+      }
+    cat("\n")
+    }
+
+  # Create comparisons variable for returned values (whether the list option
+  # is TRUE or FALSE
+  comparisons <- rep(NA,(k*(k-1)/2))
+  groupvalues  <- levels(factor(g))
+  index <- 0
+  for (i in 2:k) {
+    for (j in 1:(i-1)) {
+      index <- index + 1
+      if (rmc==FALSE) {
+        comparisons[index] <- paste0(groupvalues[j]," - ",groupvalues[i])
+        }
+      if (rmc==TRUE) {
+        comparisons[index] <- paste0(groupvalues[i]," - ",groupvalues[j])
         }
       }
     }
-    
-  cat("\n")
-    
-  invisible(list(chi2=chi2,Z=Z,P=P,P.adjusted=P.adjust))
+   
+  invisible(list(chi2=chi2,Z=Z,P=P,P.adjusted=P.adjust,comparisons=comparisons))
   }
