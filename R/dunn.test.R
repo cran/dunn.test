@@ -412,7 +412,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       nj <- sum(Data[,3]==j)
       meanranki <- mean(Data[,4][Data[,3]==i])
       meanrankj <- mean(Data[,4][Data[,3]==j])
-      if (rmc==FALSE) {
+      if (rmc==TRUE) {
         z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
         }
        else {
