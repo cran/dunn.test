@@ -1,4 +1,4 @@
-# version 1.3.2 January 6, 2016 by alexis.dinno@pdx.edu
+# version 1.3.3 February 8, 2017 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
@@ -546,7 +546,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   if (table==TRUE) {
     # Need to determine how many tables (reps) to output
     reps      <- floor((k-1)/6)
-    laststart <- k - (reps*6) + 1
+    laststart <- (reps*6) + 1
     kminusone <- k - 1
     if (label==FALSE) {
       g <- as.numeric(g)
@@ -579,12 +579,13 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
           dunntestheader(g,laststart,kminusone,rmc)
           # Table body
           for (i in (laststart+1):k) {
-            dunntestztable(g,i,Z,laststart,kminusone) 
+          	colstop <- i-1
+            dunntestztable(g,i,Z,laststart,colstop) 
             if (i < k) {
-              dunntestptable(i,P.adjust,laststart,kminusone,Reject,0)
+              dunntestptable(i,P.adjust,laststart,colstop,Reject,0)
               }
              else {
-              dunntestptable(i,P.adjust,laststart,kminusone,Reject,1)
+              dunntestptable(i,P.adjust,laststart,colstop,Reject,1)
               }
             }
           }
