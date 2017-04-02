@@ -1,4 +1,4 @@
-# version 1.3.3 February 8, 2017 by alexis.dinno@pdx.edu
+# version 1.3.4 April 1, 2017 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
@@ -33,10 +33,6 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       return(ties)
       }
 
-    if (pass == 1) {
-#      x <- x[[1]]
-      }
-  
     #set up data by lists
     if (is.list(x)) {
       N <- 0
@@ -55,7 +51,6 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
         }
       Data[,2] <- obs
       if (length(g) > 1) {
-#        Data[,3] <- as.integer(factor(g))
         Data[,3] <- g
         }
        else {
@@ -66,7 +61,6 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   
     #set up data by groups
     if (!is.list(x)) {
-#      g <- as.integer(factor(g))
       N <- length(x)
       Data <- matrix(NA,length(x),4)
       Data[,1] <- 1:length(x)
@@ -255,6 +249,13 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       cat("         |\n") 
       }
     }
+    
+  # alphabetize.factor: alphabetizes a factor
+  # this is very quick and dirty with no checking.
+  alphabetize.factor <- function(x) {
+    return(factor(sort(c(as.character(x)))))
+    }
+
 
   # VALIDATIONS & PREPARATIONS
   # names for output
@@ -264,24 +265,25 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   tempg <- 1:length(x)
   
   # casewise deletion of missing data
-  if (length(g) > 1) {
+  # Start dealing with the fact that g may be numeric, string, or factor data
+  if (length(g) > 1) {  
     if (label==TRUE) {
       if (is.factor(g)) {
         glevels <- levels(g)
         }
        else {
-        glevels <- unique(g)
+       	g <- factor(g)
+        glevels <- levels(g)
         }
       }
      else {
       glevels <- names(table(addNA(g, ifany = TRUE)))
       }
-    Data <- data.frame(cbind(x,g))
+    Data <- data.frame(x,g)[order(levels(g)[c(g)]),]
     Data <- Data[!is.na(unlist(Data$x)),]
     Data <- Data[!is.na(Data$g),]
-    x <- as.numeric(factor(Data$x))
-    g <- factor(Data$g)
-    levels(g) <- glevels
+    x <- Data[,1]
+	g <- alphabetize.factor(Data$g)
     }
    else {
      g <- c()
@@ -292,6 +294,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
        }
     x <- as.numeric(unlist(x)[!is.na(unlist(x))])
     }
+
   # validate method
   if (length(method) > 1) {
     method <- "none"
@@ -627,29 +630,45 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     cat("\n")
     }
 
-  # Output pairwise comparisons as list if requested.
+  # Output pairwise comparisons as a list if requested.
   if (list==TRUE) {
     groupvalues  <- levels(factor(g))
-    stringlength <- 2*max(nchar(groupvalues)) + 4
-    
+    # get the lengths of each group name (whether explicitly labeled or not)
+    sort(unlist(lapply(groupvalues,nchar))) -> lengths
+    # stringlength will be the sum of the two largest values in lengths plus 6
+    stringlength <- lengths[length(lengths)] + lengths[length(lengths)-1] + 6
+
     # Output list header
-    cat("\nList of pairwise comparisons: Z statistic (p-value)")
-    cat("\n---------------------------------------------------\n")
+    if (tolower(method)=="none") {
+      cat("\nList of pairwise comparisons: Z statistic (p-value)\n")
+      }
+     else {
+      cat("\nList of pairwise comparisons: Z statistic (adjusted p-value)\n")
+      }
+    cat(paste0(rep("-",stringlength+18+max(Reject)),collapse=""))
+    cat("\n")
     index <- 0
     for (i in 2:k) {
       for (j in 1:(i-1)) {
         index <- index + 1
           buffer <- max(stringlength - (nchar(groupvalues[i]) + nchar(groupvalues[j]) + 4) - 2,0)
+          if ( Reject[index] == 0) {
+            pformatted <- paste0("(",pformat(P.adjust[index]),")",sep="")
+            }
+           else {
+           	pformatted <- paste0("(",pformat(P.adjust[index]),")","*",sep="")
+           	}
         if (rmc==FALSE) {
-          cat(groupvalues[j]," - ",groupvalues[i],paste(rep(" ",buffer))," :\t",zformat(Z[index]), " (",pformat(P.adjust[index]),")\n", sep="")
+          cat(groupvalues[j]," - ",groupvalues[i],paste(rep(" ",buffer))," : ",zformat(Z[index]), " ",pformatted,"\n", sep="")
           }
         if (rmc==TRUE) {
-          cat(groupvalues[i]," - ",groupvalues[j],paste(rep(" ",buffer))," :\t",zformat(Z[index]), " (",pformat(P.adjust[index]),")\n", sep="")
+          cat(groupvalues[i]," - ",groupvalues[j],paste(rep(" ",buffer))," : ",zformat(Z[index]), " ",pformatted,"\n", sep="")
           }
         }
       }
     cat("\n")
     }
+
 
   # Create comparisons variable for returned values (whether the list option
   # is TRUE or FALSE
