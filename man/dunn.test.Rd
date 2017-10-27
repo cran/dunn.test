@@ -9,7 +9,7 @@
 \description{Performs Dunn's test of multiple comparisons using rank sums}
 \usage{
 dunn.test  (x, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, 
-      wrap=FALSE, table=TRUE, list=FALSE, rmc=FALSE, alpha=0.05)
+      wrap=FALSE, table=TRUE, list=FALSE, rmc=FALSE, alpha=0.05, altp=FALSE)
 
 p.adjustment.methods
 # c("none", "bonferroni", "sidak", "holm", "hs", "hochberg", "bh", "by")
@@ -25,37 +25,42 @@ p.adjustment.methods
  \item{list}{outputs results of Dunn's test in a list format.}
  \item{rmc}{if \option{TRUE} then the reported test statistics and table are based on row minus column, rather than the default column minus row (i.e. the signs of the test statistic are flipped).}
  \item{alpha}{the nominal level of significance used in the step-up/step-down multiple comparisons procedures (Holm, Holm-\enc{Šidák}{Sidak}, Hochberg, Benjamini-Hochberg, and Benjamini-Yekutieli).}
+ \item{altp}{if \option{TRUE} then express \emph{p}-values in alternative format.  The default is to express \emph{p}-value = P(\emph{Z} \eqn{\ge} |\emph{z}|), and reject Ho if \emph{p} \eqn{\le} \eqn{\alpha}/2.  When the \code{altp} option is used, \emph{p}-values are instead expressed as \emph{p}-value = P(|\emph{Z}| \eqn{\ge} |\emph{z}|), and reject Ho if \emph{p} \eqn{\le} \eqn{\alpha}.  \strong{These two expressions give identical test results.} Use of \code{altp} is therefore merely a semantic choice.}
 }
 \details{\code{dunn.test} computes Dunn's test (1964) for stochastic dominance and reports the results among multiple pairwise comparisons after a Kruskal-Wallis test for stochastic dominance among \emph{k} groups (Kruskal and Wallis, 1952).  The interpretation of stochastic dominance requires an assumption that the \acronym{CDF} of one group does not cross the \acronym{CDF} of the other.  \code{dunn.test} makes \emph{m} = \emph{k}(\emph{k}-1)/2 multiple pairwise comparisons based on Dunn's \emph{z}-test-statistic approximations to the actual rank statistics.  The null hypothesis for each pairwise comparison is that the probability of observing a randomly selected value from the first group that is larger than a randomly selected value from the second group equals one half; this null hypothesis corresponds to that of the Wilcoxon-Mann-Whitney rank-sum test.  Like the rank-sum test, if the data can be assumed to be continuous, and the distributions are assumed identical except for a difference in location, Dunn's test may be understood as a test for median difference.  \code{dunn.test} accounts for tied ranks.  
 
-\code{dunn.test} outputs both \emph{z}-test-statistics for each pairwise comparison and the \emph{p}-value = P(\emph{Z} \eqn{\ge} |\emph{z}|) for each, so one would reject Ho if \emph{p} \eqn{\le} \eqn{\alpha}/2. IMPORTANT NOTE: the \emph{p}-values just described are sometimes called "one-sided," (i.e. you get "two-sided" \emph{p}-values by multiplying the one-sided \emph{p}-values by 2; notice that \emph{p} \eqn{\le} \eqn{\alpha}/2 and 2\emph{p} \eqn{\le} \eqn{\alpha} are equivalent rejection decisions).
+\code{dunn.test} outputs both \emph{z}-test-statistics for each pairwise comparison and the \emph{p}-value = P(\emph{Z} \eqn{\ge} |\emph{z}|) for each. Reject Ho based on \emph{p} \eqn{\le} \eqn{\alpha}/2 (and in combination with \emph{p}-value ordering for stepwise \code{method} options).  If you prefer to work with \emph{p}-values expressed as \emph{p}-value = P(|\emph{Z}| \eqn{\ge} |\emph{z}|) use the \code{altp=TRUE} option, and reject Ho based on \emph{p} \eqn{\le} \eqn{\alpha} (and in combination with \emph{p}-value ordering for stepwise \code{method} options).  These are exactly equivalent rejection decisions.
 
 Several options are available to adjust \emph{p}-values for multiple comparisons, including methods to control the family-wise error rate (\acronym{FWER}) and methods to control the false discovery rate (\acronym{FDR}):
 
-\code{"none"} no adjustment is made.  
+\code{"none"} no adjustment is made.  Those comparisons rejected without adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and starred in the list when using the \code{list=TRUE} option.
    
-\code{"bonferroni"} the \acronym{FWER} is controlled using Dunn's (1961) Bonferroni adjustment, and adjusted \emph{p}-values = max(1, \emph{pm}).  
+\code{"bonferroni"} the \acronym{FWER} is controlled using Dunn's (1961) Bonferroni adjustment, and adjusted \emph{p}-values = max(1, \emph{pm}).  Those 
+comparisons rejected with the Bonferroni adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and starred in the list when using the \code{list=TRUE} option.
    
-\code{"sidak"} the \acronym{FWER} is controlled using Šidák's (1967) adjustment, and adjusted \emph{p}-values = max(1, 1 - (1 - \emph{p})^\emph{m}).  
+\code{"sidak"} the \acronym{FWER} is controlled using Šidák's (1967) adjustment, and adjusted \emph{p}-values = max(1, 1 - (1 - \emph{p})^\emph{m}).  Those 
+comparisons rejected with the Šidák adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and starred in the list when using the \code{list=TRUE} option. 
    
-\code{"holm"} the \acronym{FWER} controlled using Holm's (1979) progressive step-up procedure to relax control on subsequent tests.  \emph{p} values are ordered from smallest to largest, and adjusted \emph{p}-values = max[1, \emph{p}(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first test to not be rejected at the \option{alpha/2} level are not rejected.  
+\code{"holm"} the \acronym{FWER} controlled using Holm's (1979) progressive step-up procedure to relax control on subsequent tests.  \emph{p} values are ordered from smallest to largest, and adjusted \emph{p}-values = max[1, \emph{p}(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first test to not be rejected are also not rejected.
    
-\code{"hs"} the \acronym{FWER} is controlled using the Holm-Šidák adjustment (Holm, 1979): another progressive step-up procedure but assuming dependence between tests.  \emph{p} values are ordered from smallest to largest, and adjusted \emph{p}-values = max[1, 1 - (1 - \emph{p})^(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first test to not be rejected at the \option{alpha/2} level are not rejected.  
+\code{"hs"} the \acronym{FWER} is controlled using the Holm-Šidák adjustment (Holm, 1979): another progressive step-up procedure but assuming dependence between tests.  \emph{p} values are ordered from smallest to largest, and adjusted \emph{p}-values = max[1, 1 - (1 - \emph{p})^(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first test to not be rejected are also not rejected.
    
-\code{"hochberg"} the \acronym{FWER} is controlled using Hochberg's (1988) progressive step-down procedure to increase control on successive tests.  \emph{p} values are ordered from largest smallest, and adjusted \emph{p}-values = max[1, \emph{p}*\emph{i}], where \emph{i} indexes the ordering.  All tests after and including the first to be rejected at the \option{alpha/2} level are rejected.  
+\code{"hochberg"} the \acronym{FWER} is controlled using Hochberg's (1988) progressive step-down procedure to increase control on successive tests.  \emph{p} values are ordered from largest smallest, and adjusted \emph{p}-values = max[1, \emph{p}*\emph{i}], where \emph{i} indexes the ordering.  All tests after and including the first to be rejected are also rejected.
    
-\code{"bh"} the \acronym{FDR} is controlled using the Benjamini-Hochberg adjustment (1995), a step-down procedure appropriate to independent tests or tests that are positively dependent.  \emph{p}-values are ordered from largest to smallest, and adjusted \emph{p}-values = max[1, \emph{pm}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first to be rejected at the \option{alpha/2} level are rejected.  
+\code{"bh"} the \acronym{FDR} is controlled using the Benjamini-Hochberg adjustment (1995), a step-down procedure appropriate to independent tests or tests that are positively dependent.  \emph{p}-values are ordered from largest to smallest, and adjusted \emph{p}-values = max[1, \emph{pm}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first to be rejected are also rejected.
    
-\code{"by"} the \acronym{FDR} is controlled using the Benjamini-Yekutieli adjustment (2011), a step-down procedure appropriate to depenent tests.  \emph{p}-values are ordered from largest to smallest, and adjusted \emph{p}-values = max[1, \emph{pmC}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering, and the constant \emph{C} = 1 + 1/2 + .  .  .  + 1/\emph{m}.  All tests after and including the first to be rejected at the \option{alpha/2} level are rejected.  
+\code{"by"} the \acronym{FDR} is controlled using the Benjamini-Yekutieli adjustment (2011), a step-down procedure appropriate to depenent tests.  \emph{p}-values are ordered from largest to smallest, and adjusted \emph{p}-values = max[1, \emph{pmC}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering, and the constant \emph{C} = 1 + 1/2 + .  .  .  + 1/\emph{m}.  All tests after and including the first to be rejected are also rejected.
 
-Because the sequential step-up/step-down tests rejection decisions depend on both the \emph{p}-values and their ordering, those tests rejected using \code{"holm"}, \code{"hs"}, \code{"hochberg"}, \code{"bh"}, or \code{"by"} at the \option{alpha/2} level have an asterisk placed immediately after the adjusted \emph{p}-value in the output.  
+Because the sequential step-up/step-down tests rejection decisions depend on both the \emph{p}-values and their ordering, those tests rejected using \code{"holm"}, \code{"hs"}, \code{"hochberg"}, \code{"bh"}, or \code{"by"} at the indicated \eqn{\alpha} level are starred in the output table, and starred in the list when using the \code{list=TRUE} option.  
 }
 \value{
 \code{dunn.test} returns:
  \item{chi2}{a scalar of the Kruskal-Wallis test statistic adjusted for ties.}
  \item{Z}{a vector of all \emph{m} of Dunn \emph{z} test statistics.}
- \item{P}{a vector of \emph{p}-values corresponding to \code{Z}.}
- \item{P.adjust}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}).}
+ \item{P}{a vector of \emph{p}-values corresponding to \code{Z}. --OR--}
+ \item{altP}{a vector of \emph{p}-values corresponding to \code{Z} when using the \code{altp=TRUE} option.}
+ \item{P.adjust}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}). --OR--}
+ \item{altP.adjust}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}) when using the \code{altp=TRUE} option.}
  \item{comparisons}{a vector of strings labeling each pairwise comparison, as qualified by the \code{rmc} option, using either the variable values, or the factor labels or (or factor values if unlabeled). These labels match the corresponding position in the \code{Z}, \code{P}, and \code{P.adjust} vectors.}
  }
 \author{

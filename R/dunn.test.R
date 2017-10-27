@@ -1,9 +1,9 @@
-# version 1.3.4 April 1, 2017 by alexis.dinno@pdx.edu
+# version 1.3.5 October 26, 2017 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
-dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, table=TRUE, list=FALSE, rmc=FALSE, alpha=0.05) {
+dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, table=TRUE, list=FALSE, rmc=FALSE, alpha=0.05, altp=FALSE) {
 
   # FUNCTIONS
 
@@ -427,20 +427,51 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
     
   # Calculate p-values for Z statistics, and adjust as needed
-  P <- pnorm(abs(Z),lower.tail=FALSE)
-  #calculatye adjusted p-values based on method argument
+  # If p = P(Z >= |z|)
+  if (altp==FALSE) {
+    P <- pnorm(abs(Z),lower.tail=FALSE)
+    }
+   # Otherwise, if p = P(|Z| >= |z|)
+   else {
+   	P <- 2*pnorm(abs(Z),lower.tail=FALSE)
+   	}
+  #calculate adjusted p-values based on method argument
   Reject <- rep(0,m)
   # No adjustment for multiple comparisons
   if (tolower(c(method))=="none") {
     P.adjust <- P
+    # If p = P(Z >= |z|)
+    if (altp==FALSE) {
+      Reject <- P.adjust <= alpha/2
+      }
+     # Otherwise, if p= P(|Z| >= |z|)
+     else {
+      Reject <- P.adjust <= alpha
+      }
     }
   # Control FWER using (Dunn's) Bonferroni
   if (tolower(c(method))=="bonferroni") {
     P.adjust <- pmin(1,P*m)
+    # If p = P(Z >= |z|)
+    if (altp==FALSE) {
+      Reject <- P.adjust <= alpha/2
+      }
+     # Otherwise, if p= P(|Z| >= |z|)
+     else {
+      Reject <- P.adjust <= alpha
+      }
     }
   # Control FWER using Šidák
   if (tolower(c(method))=="sidak") {
     P.adjust <- pmin(1,1 - (1-P)^m)
+    # If p = P(Z >= |z|)
+    if (altp==FALSE) {
+      Reject <- P.adjust <= alpha/2
+      }
+     # Otherwise, if p= P(|Z| >= |z|)
+     else {
+      Reject <- P.adjust <= alpha
+      }
     }
   # Control FWER using Holm(-Bonferroni)
   if (tolower(c(method))=="holm") {
@@ -449,12 +480,24 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     for (i in 1:m) {
       adjust <- m+1-i
       Psort[1,i] <- pmin(1,Psort[1,i]*adjust)
-      if (i==1) {
-        Psort[3,i] <- Psort[1,i] <= alpha/2
+      # If p = P(Z >= |z|)
+      if (altp==FALSE) {
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha/2
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha/2) & Psort[3,i-1] != 0)
+          }
         }
+       # Otherwise, if p = P(|Z| >= |z|)
        else {
-         Psort[3,i] <- ((Psort[1,i] <= alpha/2) & Psort[3,i-1] != 0)
-         }
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha) & Psort[3,i-1] != 0)
+          }
+        }
       }
     Psort <- Psort[,order(Psort[2,])]
     P.adjust <- Psort[1,]
@@ -467,13 +510,24 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     for (i in 1:m) {
       adjust <- m+1-i
       Psort[1,i] <- pmin(1,(1 - ((1 - Psort[1,i])^adjust)))
-      if (i==1) {
-        Psort[3,i] <- Psort[1,i] <= alpha/2
+      # If p = P(Z >= |z|)
+      if (altp==FALSE) {
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha/2
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha/2) & Psort[3,i-1] != 0)
+          }
         }
+       # Otherwise, if p = P(|Z| >= |z|)
        else {
-         Psort[3,i] <- ((Psort[1,i] <= alpha/2) & Psort[3,i-1] != 0)
-         }
-      }
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha) & Psort[3,i-1] != 0)
+          }
+        }      }
     Psort <- Psort[,order(Psort[2,])]
     P.adjust <- Psort[1,]
     Reject <- Psort[3,]
@@ -485,12 +539,24 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     for (i in 1:m) {
       adjust <- i
       Psort[1,i] <- min(1,Psort[1,i]*adjust)
-      if (i==1) {
-        Psort[3,i] <- Psort[1,i] <= alpha/2
+      # If p = P(Z >= |z|)
+      if (altp==FALSE) {
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha/2
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
+          }
         }
+       # Otherwise, if p = P(|Z| >= |z|)
        else {
-         Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
-         }
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha) | Psort[3,i-1] == 1)
+          }
+        }
       }
     Psort <- Psort[,order(Psort[2,])]
     P.adjust <- Psort[1,]
@@ -503,12 +569,24 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     for (i in 1:m) {
       adjust <- (m/(m+1-i))
       Psort[1,i] <- min(1,Psort[1,i]*adjust)
-      if (i==1) {
-        Psort[3,i] <- Psort[1,i] <= alpha/2
+      # If p = P(Z >= |z|)
+      if (altp==FALSE) {
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha/2
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
+          }
         }
+       # Otherwise, if p = P(|Z| >= |z|)
        else {
-         Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
-         }
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha) | Psort[3,i-1] == 1)
+          }
+        }
       }
     Psort <- Psort[,order(Psort[2,])]
     P.adjust <- Psort[1,]
@@ -521,12 +599,24 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     for (i in 1:m) {
       adjust <- (m/(m+1-i))*sum(1/(1:m))
       Psort[1,i] <- min(1,Psort[1,i]*adjust)
-      if (i==1) {
-        Psort[3,i] <- Psort[1,i] <= (alpha/2) # reverse sorted, so m-i+1, rather than i
+      # If p = P(Z >= |z|)
+      if (altp==FALSE) {
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha/2
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
+          }
         }
+       # Otherwise, if p = P(|Z| >= |z|)
        else {
-         Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
-         }
+        if (i==1) {
+          Psort[3,i] <- Psort[1,i] <= alpha
+          }
+         else {
+          Psort[3,i] <- ((Psort[1,i] <= alpha) | Psort[3,i-1] == 1)
+          }
+        }
       }
     Psort <- Psort[,order(Psort[2,])]
     P.adjust <- Psort[1,]
@@ -669,6 +759,15 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     cat("\n")
     }
 
+  cat("alpha = ",alpha,"\n",sep="")
+  # If p = P(Z <= |z|)
+  if (altp==FALSE) {
+    cat("Reject Ho if p <= alpha/2\n")
+    }
+   # Otherwise, if p = P(|Z| <= |z|)
+   else {
+    cat("Reject Ho if p <= alpha\n")
+    }
 
   # Create comparisons variable for returned values (whether the list option
   # is TRUE or FALSE
@@ -687,5 +786,12 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
       }
     }
    
-  invisible(list(chi2=chi2,Z=Z,P=P,P.adjusted=P.adjust,comparisons=comparisons))
+  # If p = P(Z <= |z|)
+  if (altp==FALSE) {
+   invisible(list(chi2=chi2,Z=Z,P=P,P.adjusted=P.adjust,comparisons=comparisons))
+   }
+   # Otherwise, if p = P(|Z| <= |z|)
+   else {
+   invisible(list(chi2=chi2, Z=Z, altP=P, altP.adjusted=P.adjust, comparisons=comparisons))
+   }
   }
