@@ -1,4 +1,4 @@
-# version 1.3.5 October 26, 2017 by alexis.dinno@pdx.edu
+# version 1.3.6 March 31, 2019 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")

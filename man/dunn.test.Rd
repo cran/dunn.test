@@ -33,24 +33,42 @@ p.adjustment.methods
 
 Several options are available to adjust \emph{p}-values for multiple comparisons, including methods to control the family-wise error rate (\acronym{FWER}) and methods to control the false discovery rate (\acronym{FDR}):
 
-\code{"none"} no adjustment is made.  Those comparisons rejected without adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and starred in the list when using the \code{list=TRUE} option.
-   
-\code{"bonferroni"} the \acronym{FWER} is controlled using Dunn's (1961) Bonferroni adjustment, and adjusted \emph{p}-values = max(1, \emph{pm}).  Those 
-comparisons rejected with the Bonferroni adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and starred in the list when using the \code{list=TRUE} option.
-   
-\code{"sidak"} the \acronym{FWER} is controlled using Šidák's (1967) adjustment, and adjusted \emph{p}-values = max(1, 1 - (1 - \emph{p})^\emph{m}).  Those 
-comparisons rejected with the Šidák adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and starred in the list when using the \code{list=TRUE} option. 
-   
-\code{"holm"} the \acronym{FWER} controlled using Holm's (1979) progressive step-up procedure to relax control on subsequent tests.  \emph{p} values are ordered from smallest to largest, and adjusted \emph{p}-values = max[1, \emph{p}(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first test to not be rejected are also not rejected.
-   
-\code{"hs"} the \acronym{FWER} is controlled using the Holm-Šidák adjustment (Holm, 1979): another progressive step-up procedure but assuming dependence between tests.  \emph{p} values are ordered from smallest to largest, and adjusted \emph{p}-values = max[1, 1 - (1 - \emph{p})^(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first test to not be rejected are also not rejected.
-   
-\code{"hochberg"} the \acronym{FWER} is controlled using Hochberg's (1988) progressive step-down procedure to increase control on successive tests.  \emph{p} values are ordered from largest smallest, and adjusted \emph{p}-values = max[1, \emph{p}*\emph{i}], where \emph{i} indexes the ordering.  All tests after and including the first to be rejected are also rejected.
-   
-\code{"bh"} the \acronym{FDR} is controlled using the Benjamini-Hochberg adjustment (1995), a step-down procedure appropriate to independent tests or tests that are positively dependent.  \emph{p}-values are ordered from largest to smallest, and adjusted \emph{p}-values = max[1, \emph{pm}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and including the first to be rejected are also rejected.
-   
-\code{"by"} the \acronym{FDR} is controlled using the Benjamini-Yekutieli adjustment (2011), a step-down procedure appropriate to depenent tests.  \emph{p}-values are ordered from largest to smallest, and adjusted \emph{p}-values = max[1, \emph{pmC}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering, and the constant \emph{C} = 1 + 1/2 + .  .  .  + 1/\emph{m}.  All tests after and including the first to be rejected are also rejected.
-
+\tabular{rl}{
+\option{none} \tab no adjustment is made.  Those comparisons rejected without adjustment at the \eqn{\alpha} \cr
+\tab level (two-sided test) are starred in the output table, and starred in the list when \cr
+\tab using the \code{list=TRUE} option.\cr\cr
+\option{bonferroni} \tab the \acronym{FWER} is controlled using Dunn's (1961) Bonferroni adjustment, and adjusted \cr
+\tab \emph{p}-values = max(1, \emph{pm}).  Those comparisons rejected with the Bonferroni \cr
+\tab adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and \cr
+\tab starred in the list when using the \code{list=TRUE} option.\cr\cr
+\option{sidak}\tab the \acronym{FWER} is controlled using Šidák's (1967) adjustment, and adjusted \cr
+\tab \emph{p}-values = max(1, 1 - (1 - \emph{p})^\emph{m}).  Those comparisons rejected with the Šidák \cr
+\tab adjustment at the \eqn{\alpha} level (two-sided test) are starred in the output table, and \cr
+\tab starred in the list when using the \code{list=TRUE} option.\cr\cr
+\option{holm}\tab the \acronym{FWER} controlled using Holm's (1979) progressive step-up procedure to relax \cr
+\tab control on subsequent tests.  \emph{p} values are ordered from smallest to largest, and \cr
+\tab adjusted \emph{p}-values = max[1, \emph{p}(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after \cr
+\tab and including the first test to not be rejected are also not rejected.\cr\cr
+\option{hs}\tab the \acronym{FWER} is controlled using the Holm-Šidák adjustment (Holm, 1979): another \cr
+\tab progressive step-up procedure but assuming dependence between tests.  \emph{p} values \cr
+\tab are ordered from smallest to largest, and adjusted \cr
+\tab \emph{p}-values = max[1, 1 - (1 - \emph{p})^(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after \cr
+\tab and including the first test to not be rejected are also not rejected.\cr\cr
+\option{hochberg}\tab the \acronym{FWER} is controlled using Hochberg's (1988) progressive step-down \cr
+\tab procedure to increase control on successive tests.  \emph{p} values are ordered from largest–\cr
+\tab smallest, and adjusted \emph{p}-values = max[1, \emph{p}*\emph{i}], where \emph{i} indexes the ordering.  All \cr
+\tab tests after and including the first to be rejected are also rejected.\cr\cr
+\option{bh}\tab the \acronym{FDR} is controlled using the Benjamini-Hochberg adjustment (1995), a step-\cr
+\tab down procedure appropriate to independent tests or tests that are positively \cr
+\tab dependent.  \emph{p}-values are ordered from largest to smallest, and adjusted \cr
+\tab \emph{p}-values = max[1, \emph{pm}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the ordering.  All tests after and \cr
+\tab including the first to be rejected are also rejected.\cr\cr
+\option{by}\tab the \acronym{FDR} is controlled using the Benjamini-Yekutieli adjustment (2011), a step-\cr
+\tab down procedure appropriate to dependent tests.  \emph{p}-values are ordered from largest to \cr
+\tab smallest, and adjusted \emph{p}-values = max[1, \emph{pmC}/(\emph{m}+1-\emph{i})], where \emph{i} indexes the \cr
+\tab ordering, and the constant \emph{C} = 1 + 1/2 + .  .  .  + 1/\emph{m}.  All tests after and including the \cr
+\tab first to be rejected are also rejected.\cr
+}
 Because the sequential step-up/step-down tests rejection decisions depend on both the \emph{p}-values and their ordering, those tests rejected using \code{"holm"}, \code{"hs"}, \code{"hochberg"}, \code{"bh"}, or \code{"by"} at the indicated \eqn{\alpha} level are starred in the output table, and starred in the list when using the \code{list=TRUE} option.  
 }
 \value{
@@ -65,23 +83,30 @@ Because the sequential step-up/step-down tests rejection decisions depend on bot
  }
 \author{
 Alexis Dinno (\email{alexis.dinno@pdx.edu})
+
+Please contact me with any questions, bug reports or suggestions for improvement.  Fixing bugs will be facilitated by sending along:
+\tabular{rl}{
+[1] \tab a copy of the data (de-labeled or anonymized is fine),\cr
+[2] \tab a copy of the command syntax used, and\cr
+[3] \tab a copy of the exact output of the command.\cr
+}
 }
 \references{
-Benjamini, Y. and Hochberg, Y.  (1995)  Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing. \emph{Journal of the Royal Statistical Society.  Series B (Methodological)}.  \bold{57}, 289--300.  
+Benjamini, Y. and Hochberg, Y.  (1995)  Controlling the false discovery rate: A practical and powerful approach to multiple testing. \emph{Journal of the Royal Statistical Society.  Series B (Methodological)}.  \bold{57}, 289--300.  <\doi{10.1111/j.2517-6161.1995.tb02031.x}>.
 
-Benjamini, Y.  and Yekutieli, D.  (2001)  The control of the false discovery rate in multiple testing under dependency. \emph{Annals of Statistics}.  \bold{29}, 1165--1188.  
+Benjamini, Y.  and Yekutieli, D.  (2001)  The control of the false discovery rate in multiple testing under dependency. \emph{Annals of Statistics}.  \bold{29}, 1165--1188.  <\doi{10.1214/aos/1013699998}>.
 
-Dunn, O.  J.  (1961)  Multiple comparisons among means.  \emph{Journal of the American Statistical Association}.  \bold{56}, 52--64.  
+Dunn, O.  J.  (1961)  Multiple comparisons among means.  \emph{Journal of the American Statistical Association}.  \bold{56}, 52--64.  <\doi{10.1080/01621459.1961.10482090}>.
 
-Dunn, O.  J.  (1964)  Multiple comparisons using rank sums.  \emph{Technometrics}.  \bold{6}, 241--252.  
+Dunn, O.  J.  (1964)  Multiple comparisons using rank sums.  \emph{Technometrics}.  \bold{6}, 241--252.  <\doi{10.1080/00401706.1964.10490181}>.
 
-Hochberg, Y.  (1988)  A sharper Bonferroni procedure for multiple tests of significance.  \emph{Biometrika}.  \bold{75}, 800--802.  
+Hochberg, Y.  (1988)  A sharper Bonferroni procedure for multiple tests of significance.  \emph{Biometrika}.  \bold{75}, 800--802.  <\doi{10.1093/biomet/75.4.800}>.
 
-Holm, S.  (1979)  A simple sequentially rejective multiple test procedure.  \emph{Scandinavian Journal of Statistics}.  \bold{6}, 65--70.  
+Holm, S.  (1979)  \href{https://www.jstor.org/stable/4615733}{A simple sequentially rejective multiple test procedure}.  \emph{Scandinavian Journal of Statistics}.  \bold{6}, 65--70.
 
-Kruskal, W.  H. and Wallis, A.  (1952)  Use of ranks in one-criterion variance analysis.  \emph{Journal of the American Statistical Association}.  \bold{47}, 583--621.  
+Kruskal, W.  H. and Wallis, A.  (1952)  Use of ranks in one-criterion variance analysis.  \emph{Journal of the American Statistical Association}.  \bold{47}, 583--621.  <\doi{10.1080/01621459.1952.10483441}>.
 
-\enc{Šidák}{Sidak}, Z.  (1967)  Rectangular confidence regions for the means of multivariate normal distributions.  \emph{Journal of the American Statistical Association}.  \bold{62}, 626--633.  
+\enc{Šidák}{Sidak}, Z.  (1967)  Rectangular confidence regions for the means of multivariate normal distributions.  \emph{Journal of the American Statistical Association}.  \bold{62}, 626--633.  <\doi{10.1080/01621459.1967.10482935}>.
 }
 \examples{
 ## Example cribbed and modified from the kruskal.test documentation
