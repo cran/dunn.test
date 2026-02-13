@@ -1,15 +1,27 @@
-# version 1.3.6 March 31, 2019 by alexis.dinno@pdx.edu
+# version 1.3.8 February 11, 2026 by alexis.dinno@pdx.edu
 # perform Dunn's test of multiple comparisons using rank sums
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
-dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, wrap=FALSE, table=TRUE, list=FALSE, rmc=FALSE, alpha=0.05, altp=FALSE) {
+dunn.test <- function(
+  x=NA, 
+  g=NA, 
+  method=p.adjustment.methods, 
+  kw=TRUE, 
+  label=TRUE, 
+  wrap=FALSE, 
+  table=TRUE, 
+  list=FALSE, 
+  rmc=FALSE, 
+  alpha=0.05, 
+  altp=FALSE, 
+  interpret=TRUE) {
 
   # FUNCTIONS
 
   # kwallis.test: a custom Kruskal Wallis test function to support dunn.test
   # Note: does not currently play nicely with missing values.
-  kwallis.test <- function(x=NA,g=NA,pass=0) {
+  kwallis.test <- function(x=NA, g=NA, pass=0) {
     # FUNCTIONS
     # tiedranks: enumerates tied values from a vector of ranks
     # ranks: a vector of rank values
@@ -94,7 +106,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     p  <- pchisq(H,k-1,lower.tail=FALSE)
   
     #present output
-    output <- paste("Kruskal-Wallis chi-squared = ",round(H,digits=4),", df = ",df,", p-value = ",round(p,digits=2),"\n\n" ,sep="")
+    output <- paste("Kruskal-Wallis chi-squared = ",round(H,digits=4),", df = ",df,", p-value = ",round(p,digits=2),"\n" ,sep="")
   
     invisible(list(output=output,H=H,df=df,p=p,N=N,Data=Data,data.name=data))
     }
@@ -160,53 +172,42 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
      return(paste0(sign,leftdigits,".",rightdigits))
     }
 
-  # pformat: formats p values for display in table
-  # p: a real p-value
-  # returns: a formatted string
-  pformat <- function(p) {
-     if (p == 1) {
-       return("1.0000")
-       }
-      else {
-       rightspaces <- 4
-       rightdigits <- substr(paste0(sprintf("%1.4f",p),"000000000"),3,rightspaces+2)
-       return(paste0("0.",rightdigits))
-       }
-    }
-
   # centertext: centers a string within a specific width
-  centertext <- function(text,width=80,lmargin=2,rmargin=2) {
+  centertext <- function(text, width=80, lmargin=2, rmargin=2) {
     textwidth <- nchar(text)
     if (textwidth <= width-lmargin-rmargin) {
-      text <- substr(text,1,width-lmargin-rmargin)
+      text <- substr(text, 1, width-lmargin-rmargin)
       }
     buff <- (width-lmargin-rmargin-textwidth)
     if (buff%%2 == 0) {
-      return(paste(paste(rep(" ",buff/2),collapse=""),text,paste(rep(" ",buff/2),collapse=""),"\n",collapse=""))
+      return(paste(paste(rep(" ", buff/2), collapse=""), text, paste(rep(" ", buff/2), collapse=""), collapse=""))
       }
      else {
-      return(paste(paste(rep(" ",1+(buff-1)/2),collapse=""),text,paste(rep(" ",(buff-1)/2),collapse=""),"\n",collapse=""))
+      return(paste(paste(rep(" ", 1+(buff-1)/2), collapse=""), text, paste(rep(" ", (buff-1)/2), collapse=""), collapse=""))
       }
     }
 
   # dunntestheader: displays Dunn's test table headers.
-  dunntestheader <- function(groupvar,colstart,colstop,rmc) {
+  dunntestheader <- function(groupvar, colstart, colstop, rmc) {
     if (rmc==FALSE) {
-      cat("Col Mean-|\nRow Mean |")
+      rlang::inform(message="Col Mean-\U2502")
+      RMCM_head <- "Row Mean \U2502"
       }
      else {
-      cat("Row Mean-|\nCol Mean |")
+      rlang::inform(message="Row Mean-\U2502")
+      RMCM_head <- "Col Mean \U2502"
       }
     groupvalues  <- levels(factor(groupvar))
+    RMCM_tail <- ""
     for (col in colstart:colstop) {
-      vallab  <- substr(groupvalues[col],1,8)
+      vallab  <- substr(groupvalues[col], 1, 8)
       pad     <- 8-nchar(vallab)
       colhead <- paste0(tpad(n=pad),vallab)
-      cat(paste0("   ",substr(colhead,1,8)),sep="")
+      RMCM_tail <- paste0(RMCM_tail, "   ", substr(colhead, 1, 8), sep="")
       }
-    cat("\n")  
+    rlang::inform(message=paste0(RMCM_head, RMCM_tail, sep=""))  
     separatorlength = 10 + 11*(colstop-colstart)+1
-    cat(tpad(n=9,pad="-"),"+",tpad(n=separatorlength,pad="-"),"\n",sep="")
+    rlang::inform(message=paste0(tpad(n=9, pad="\U2500"), "\U253C", tpad(n=separatorlength, pad="\U2500"), sep=""))
     }
 
   # dunntestztable displays Dunn's test z values
@@ -214,39 +215,41 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     groupvalues  <- levels(factor(groupvar))
 
     # Row headers
-    vallab  <- substr(groupvalues[index],1,8)
+    vallab  <- substr(groupvalues[index], 1, 8)
     pad     <- 8-nchar(vallab)
-    rowhead <- paste0(tpad(n=pad),vallab)
-    cat(paste0(rowhead," |"))
+    rowhead <- paste0(tpad(n=pad), vallab)
+    z_row_head <- paste0(rowhead, " \U2502")
 
     # Table z entries
+    z_row_tail <- ""
     for (i in colstart:colstop) {
       z <- Z[(((index-2)*(index-1))/2) + i]
-      cat(paste0("  ",zformat(z)))
+      z_row_tail <- paste0(z_row_tail, "  ", zformat(z), sep="")
       }
-    cat("\n")
+    rlang::inform(message=paste0(z_row_head, z_row_tail, sep=""))
     }
 
   # dunntestptable: displays Dunn's test p values
-  dunntestptable <- function(index, P, colstart, colstop, Reject,last) {
-    # Blank row header
-    cat("         |")
+  dunntestptable <- function(index, P, colstart, colstop, Reject, last) {
+    # p row header
+    p_row_head <- "         \U2502"
 
     # Table p entries
+    p_row_tail = c(" ")
     for (i in colstart:colstop) {
       p <- P[(((index-2)*(index-1))/2) + i]
       if ( Reject[(((index-2)*(index-1))/2) + i] == 0) {
-        cat(paste0("     ",pformat(p)),sep="")
+        p_row_tail <- paste0(p_row_tail, "    ", sprintf("%1.4f",p), " ", sep="")
         }
        else {
-        cat(paste0("    ",pformat(p)),"*",sep="")
+        p_row_tail <- paste0(p_row_tail, "    ", sprintf("%1.4f",p), "*", sep="")
         }
       }
-    cat("\n")
+    rlang::inform(message=paste0(p_row_head, p_row_tail, sep=""))
 
     # Close out with another blank row header
     if (last == 0) {
-      cat("         |\n") 
+      rlang::inform(message="         \U2502") 
       }
     }
     
@@ -301,7 +304,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
     
   if (tolower(method) != "none" & tolower(method) != "bonferroni" & tolower(method) != "sidak" & tolower(method) != "holm" & tolower(method) != "hs" & tolower(method) != "hochberg" & tolower(method) != "bh" & tolower(method) != "by") {
-    stop("method must be one of: none, bonferroni, sidak, hs, bh, or by")
+    rlang::abort(message="method must be one of: none, bonferroni, sidak, hs, bh, or by")
     }
 
   if (tolower(method)=="none") {
@@ -331,30 +334,30 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
   # validate that x is longer than 1
   if (length(unlist(x))==1) {
-    stop("too few observations in x.")
+    rlang::abort(message="too few observations in x.")
     }
   # validate that x is a numeric vector of data values, or a list of numeric 
   # data vectors, and is not NA
   if (TRUE %in% is.na(unlist(x)) | !is.vector(unlist(x), mode="numeric") ) {
-    stop("x must contain a numeric vector of data values, or a list of numeric data vectors.")
+    rlang::abort(message="x must contain a numeric vector of data values, or a list of numeric data vectors.")
     }
   # validate that g is not missing if x is a vector
   if (!xaslist & TRUE %in% is.na(g) ) {
-    stop("when specifying x as a vector, you must include g.")
+    rlang::abort(message="when specifying x as a vector, you must include g.")
     }
   # validate that g is not NA
   if (length(g) > 1 & TRUE %in% is.na(g)) {
-    stop("g must have no missing values.")
+    rlang::abort(message="g must have no missing values.")
     }
   # validate that g is factor or vector.
   if (length(g) > 1 & ( !is.factor(g) & !is.vector(g) ) ) {
     
-    stop("g must be a factor, character vector, or integer vector.")
+    rlang::abort(message="g must be a factor, character vector, or integer vector.")
     }
   # validate that g is a vector of mode = character or mode = integer.
   if (length(g) > 1 & is.vector(g) ) {
     if ( !is.vector(g, mode="character") & !all.integers(g) ) {
-      stop("g must be a factor, character vector, or integer vector.")
+      rlang::abort(message="g must be a factor, character vector, or integer vector.")
       }
     }
 
@@ -371,8 +374,8 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
 
   if (kw==TRUE) {
-    cat("  Kruskal-Wallis rank sum test\n\ndata: ",xname," and ",gname,"\n",sep="")
-    cat(out$output)
+    rlang::inform(message=paste0("  Kruskal-Wallis rank sum test\n\ndata: ", xname, " and ", gname, sep=""))
+    rlang::inform(message=out$output)
     }
     chi2 <- out$H
     df   <- out$df
@@ -429,11 +432,11 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
   # Calculate p-values for Z statistics, and adjust as needed
   # If p = P(Z >= |z|)
   if (altp==FALSE) {
-    P <- pnorm(abs(Z),lower.tail=FALSE)
+    P <- pnorm(abs(Z), lower.tail=FALSE)
     }
    # Otherwise, if p = P(|Z| >= |z|)
    else {
-   	P <- 2*pnorm(abs(Z),lower.tail=FALSE)
+   	P <- 2*pnorm(abs(Z), lower.tail=FALSE)
    	}
   #calculate adjusted p-values based on method argument
   Reject <- rep(0,m)
@@ -475,11 +478,11 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
   # Control FWER using Holm(-Bonferroni)
   if (tolower(c(method))=="holm") {
-    Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
+    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
     Psort <- Psort[,order(Psort[1,])]
     for (i in 1:m) {
       adjust <- m+1-i
-      Psort[1,i] <- pmin(1,Psort[1,i]*adjust)
+      Psort[1,i] <- pmin(1, Psort[1,i]*adjust)
       # If p = P(Z >= |z|)
       if (altp==FALSE) {
         if (i==1) {
@@ -505,11 +508,11 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
   # Control FWER using Holm-Šidák
   if (tolower(c(method))=="hs") {
-    Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
+    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
     Psort <- Psort[,order(Psort[1,])]
     for (i in 1:m) {
       adjust <- m+1-i
-      Psort[1,i] <- pmin(1,(1 - ((1 - Psort[1,i])^adjust)))
+      Psort[1,i] <- pmin(1, (1 - ((1 - Psort[1,i])^adjust)))
       # If p = P(Z >= |z|)
       if (altp==FALSE) {
         if (i==1) {
@@ -534,7 +537,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
   # Control FWER using Hochberg
   if (tolower(c(method))=="hochberg") {
-    Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
+    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
     Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
     for (i in 1:m) {
       adjust <- i
@@ -564,7 +567,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
   # Control FDR using Benjamini-Hochberg
   if (tolower(c(method))=="bh") {
-    Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
+    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
     Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
     for (i in 1:m) {
       adjust <- (m/(m+1-i))
@@ -594,7 +597,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
   # Control FDR using Benjamini-Yekuteili
   if (tolower(c(method))=="by") {
-    Psort <- matrix(c(P,1:m,rep(0,m)),3,m,byrow=TRUE)
+    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
     Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
     for (i in 1:m) {
       adjust <- (m/(m+1-i))*sum(1/(1:m))
@@ -624,16 +627,16 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
     }
 
   # OUTPUT
-  cat("\n")
+  rlang::inform(message="")
   if (table==TRUE | list==TRUE) {
     if ((TRUE %in% is.na(g))) {
-      title <- paste("Comparison of ",xname," across ",k," groups",sep="")
+      title <- paste("Dunn's Pairwise Comparison of ",xname," across ",k," groups",sep="")
       }
      else {
-      title <- paste("Comparison of ",xname," by ",gname,sep="")
+      title <- paste("Dunn's Pairwise Comparison of ",xname," by ",gname,sep="")
       }
-    cat(centertext(title))
-    cat(centertext(Name))
+    rlang::inform(message=centertext(title))
+    rlang::inform(message=paste0(centertext(Name), sep=""))
     }
 
   if (table==TRUE) {
@@ -717,7 +720,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
         }
       }
       
-    cat("\n")
+    rlang::inform(message="")
     }
 
   # Output pairwise comparisons as a list if requested.
@@ -730,43 +733,51 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
 
     # Output list header
     if (tolower(method)=="none") {
-      cat("\nList of pairwise comparisons: Z statistic (p-value)\n")
+      rlang::inform(message="List of pairwise comparisons: Z statistic (p-value)")
       }
      else {
-      cat("\nList of pairwise comparisons: Z statistic (adjusted p-value)\n")
+      rlang::inform(message="List of pairwise comparisons: Z statistic (adjusted p-value)")
       }
-    cat(paste0(rep("-",stringlength+18+max(Reject)),collapse=""))
-    cat("\n")
+    list_head_length <- max(nchar(groupvalues)) + tail(sort(nchar(unique(groupvalues))), n=2)[1] + 4
+    rlang::inform(message=paste0(paste0(rep("\U2500", list_head_length), collapse=""), "\U252C", paste0(rep("\U2500", 19+max(Reject)), collapse=""), collapse="", sep=""))
     index <- 0
     for (i in 2:k) {
       for (j in 1:(i-1)) {
         index <- index + 1
-          buffer <- max(stringlength - (nchar(groupvalues[i]) + nchar(groupvalues[j]) + 4) - 2,0)
-          if ( Reject[index] == 0) {
-            pformatted <- paste0("(",pformat(P.adjust[index]),")",sep="")
-            }
-           else {
-           	pformatted <- paste0("(",pformat(P.adjust[index]),")","*",sep="")
-           	}
+        buffer <- list_head_length - (nchar(groupvalues[i]) + nchar(groupvalues[j]) + 4)
+        if ( Reject[index] == 0) {
+          pformatted <- paste0("(", sprintf("%1.4f", P.adjust[index]), ")", sep="")
+          }
+         else {
+         	pformatted <- paste0("(", sprintf("%1.4f", P.adjust[index]), ")", "*", sep="")
+         	}
         if (rmc==FALSE) {
-          cat(groupvalues[j]," - ",groupvalues[i],paste(rep(" ",buffer))," : ",zformat(Z[index]), " ",pformatted,"\n", sep="")
+          rlang::inform(message=paste0(groupvalues[j]," - ",groupvalues[i],paste0(rep(" ",buffer), collapse="")," \U2502 ",zformat(Z[index]), " ",pformatted, sep=""))
           }
         if (rmc==TRUE) {
-          cat(groupvalues[i]," - ",groupvalues[j],paste(rep(" ",buffer))," : ",zformat(Z[index]), " ",pformatted,"\n", sep="")
+          rlang::inform(message=paste0(groupvalues[i]," - ",groupvalues[j],paste0(rep(" ",buffer), collapse="")," \U2502 ",zformat(Z[index]), " ",pformatted, sep=""))
           }
         }
       }
-    cat("\n")
+  if (interpret==TRUE) {
+      rlang::inform(message="")
     }
-
-  cat("alpha = ",alpha,"\n",sep="")
-  # If p = P(Z <= |z|)
-  if (altp==FALSE) {
-    cat("Reject Ho if p <= alpha/2\n")
-    }
-   # Otherwise, if p = P(|Z| <= |z|)
-   else {
-    cat("Reject Ho if p <= alpha\n")
+  }
+  symbol <- "\U03B1"
+  procedure <- ""
+  if (method == "holm" | method == "sidak" | method == "hs" | method == "hochberg") symbol <- "FWER" 
+  if (method == "bh" | method == "by") symbol <- "FDR"
+  if (method == "holm" | method == "hs" | method == "hochberg" | method == "bh" | method == "by") procedure <- " with stopping rule" 
+  if (interpret==TRUE) {
+    rlang::inform(message=paste0(symbol, " = ",alpha, sep=""))
+    # If p = P(Z >= |z|)
+    if (altp==FALSE) {
+      rlang::inform(message=paste0("Reject Ho if p \U2264 ", symbol, "/2", procedure, ", where p = Pr(Z \U2265 |z|)"))
+      }
+     # Otherwise, if p = P(|Z| <= |z|)
+     else {
+      rlang::inform(message=paste0("Reject Ho if p \U2264 ", symbol, procedure, ", where p = Pr(|Z| \U2265 |z|)"))
+      }
     }
 
   # Create comparisons variable for returned values (whether the list option
@@ -788,7 +799,7 @@ dunn.test <- function(x=NA, g=NA, method=p.adjustment.methods, kw=TRUE, label=TR
    
   # If p = P(Z <= |z|)
   if (altp==FALSE) {
-   invisible(list(chi2=chi2,Z=Z,P=P,P.adjusted=P.adjust,comparisons=comparisons))
+   invisible(list(chi2=chi2, Z=Z, P=P, P.adjusted=P.adjust, comparisons=comparisons))
    }
    # Otherwise, if p = P(|Z| <= |z|)
    else {

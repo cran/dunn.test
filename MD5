@@ -1,7 +1,9 @@
-82d375e7337c3d4063950353c09226ac *DESCRIPTION
-71b4a95044c5009b61f31dafe950b046 *NAMESPACE
-d8bdf6e63db29e60b01b8341563446c2 *R/dunn.test.R
-20c8d3f97d93e2e318a22508275b5a02 *build/partial.rdb
+1f9bbdc288f2332bea920d41e37f4e4c *DESCRIPTION
+50970617f3adee3c2eb4c6f819a4e96a *NAMESPACE
+fb9b44ca2ec851cd9bbf04e970392a3c *R/dunn.test.R
+c0cf2a76b91da02ee7fc7ed138e26e78 *R/pad.left.R
+22a64bfff49241aaf7a0f35b542891b9 *R/pad.spaces.R
+76e123f5dcc8dee07678412adc0a2a84 *build/partial.rdb
 d1ea6b6637e88fbc089cbc0f742b1518 *data/homecare.rda
-deec6c179d5a953eb8d1e76872e0e76f *man/dunn.test.Rd
+8725ee44310d2bcd76d0176ad46cb715 *man/dunn.test.Rd
 dfbecd34610254733ec464d265825aa5 *man/homecare.Rd
