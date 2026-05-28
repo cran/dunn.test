@@ -1,292 +1,61 @@
-# version 1.3.8 February 11, 2026 by alexis.dinno@pdx.edu
-# perform Dunn's test of multiple comparisons using rank sums
+# Perform Dunn's test of multiple comparisons using rank sums
+# Version: 1.4.0
+# Author: Alexis Dinno
+# Date: May 23, 2026
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
 dunn.test <- function(
-  x=NA, 
-  g=NA, 
-  method=p.adjustment.methods, 
-  kw=TRUE, 
-  label=TRUE, 
-  wrap=FALSE, 
-  table=TRUE, 
-  list=FALSE, 
-  rmc=FALSE, 
-  alpha=0.05, 
-  altp=FALSE, 
-  interpret=TRUE) {
+    x=NA, 
+    g=NA,
+    method=p.adjustment.methods, 
+    kw=TRUE, 
+    label=TRUE, 
+    wrap=FALSE, 
+    table=TRUE, 
+    list=FALSE, 
+    rmc=FALSE, 
+    alpha=0.05, 
+    altp=FALSE, 
+    interpret=TRUE, 
+    single.contrast=NA
+    ) {
 
-  # FUNCTIONS
-
-  # kwallis.test: a custom Kruskal Wallis test function to support dunn.test
-  # Note: does not currently play nicely with missing values.
-  kwallis.test <- function(x=NA, g=NA, pass=0) {
-    # FUNCTIONS
-    # tiedranks: enumerates tied values from a vector of ranks
-    # ranks: a vector of rank values
-    # returns: ties, a vector of values that are tied
-    tiedranks <- function(ranks) {
-      ranks <- sort(ranks)
-      #enumerate tied values
-      ties <- c()
-      for (i in 2:length(ranks)) {
-        if (ranks[i-1] == ranks[i]) {
-          if (length(ties) > 0) {
-            if (ranks[i-1] != tail(ties,n=1)) {
-              ties <- c(ties,ranks[i-1])
-              }
-            }
-           else {
-            ties <- c(ranks[i-1])
-            }
-          }
-        }
-      return(ties)
-      }
-
-    #set up data by lists
-    if (is.list(x)) {
-      N <- 0
-      for (i in 1:length(x)) {
-        N <- N + length(x[[i]])
-        }
-      Data <- matrix(NA,N,4)
-      for (i in 1:N) {
-        Data[i,1] <- i
-        }
-      obs <- c()
-      group <- c()
-      for (i in 1:length(x)) {
-        obs <- c(obs,x[[i]])
-        group <- c(group,rep(i,length(x[[i]])))
-        }
-      Data[,2] <- obs
-      if (length(g) > 1) {
-        Data[,3] <- g
-        }
-       else {
-        Data[,3] <- group        
-        }
-      Data[,4] <- rank(Data[,2], ties.method="average", na.last=NA)
-      }
-  
-    #set up data by groups
-    if (!is.list(x)) {
-      N <- length(x)
-      Data <- matrix(NA,length(x),4)
-      Data[,1] <- 1:length(x)
-      Data[,2] <- x
-      Data[,3] <- g
-      Data[,4] <- rank(Data[,2], ties.method="average", na.last=NA)
-      }
-    k <- length(unique(Data[,3]))
-  
-    #calculate ties adjustment
-    ranks <- Data[,4]
-    ranks <- ranks[!is.na(ranks)]
-    ties <- tiedranks(ranks)
-    r <- length(ties)
-    tiesadj <- 0
-    if (r > 0) {
-      for (s in 1:r) {
-        tau <- sum(ranks==ties[s])
-        tiesadj <- tiesadj + (tau^{3} - tau)
-        }
-      }
-    tiesadj <- 1-(tiesadj/((N^3) - N))
-  
-    #calculate H
-    ranksum <- 0
-    for (i in 1:k) {
-      ranksum <- ranksum + ((sum(Data[,4][Data[,3]==i]))^2)/(sum(Data[,3]==i))
-      }
-    H  <- ((12/(N*(N+1)))*ranksum - 3*(N+1))/tiesadj
-    df <- k-1
-    p  <- pchisq(H,k-1,lower.tail=FALSE)
-  
-    #present output
-    output <- paste("Kruskal-Wallis chi-squared = ",round(H,digits=4),", df = ",df,", p-value = ",round(p,digits=2),"\n" ,sep="")
-  
-    invisible(list(output=output,H=H,df=df,p=p,N=N,Data=Data,data.name=data))
-    }
-
-  # all.integers robustly tests whether all elements of a vector are integers
-  all.integers <- function(x) {
-    for (i in length(x)) {
-      if (is.na(x[i]) | is.list(x[i]) | length(x[i]) > 1 | !is.numeric(x[i])) {
-        return(FALSE)
-        }
-      if (x[i]%%1!=0) {
-        return(FALSE)
-        }
-      }
-    return(TRUE)
-    }
-
-  # tiedranks: enumerates tied values from a vector of ranks
-  # ranks: a vector of rank values
-  # returns: ties, a vector of values that are tied
-  tiedranks <- function(ranks) {
-    ranks <- sort(ranks)
-    #enumerate tied values
-    ties <- c()
-    for (i in 2:length(ranks)) {
-      if (ranks[i-1] == ranks[i]) {
-        if (length(ties) > 0) {
-          if (ranks[i-1] != tail(ties,n=1)) {
-            ties <- c(ties,ranks[i-1])
-            }
-          }
-         else {
-          ties <- c(ranks[i-1])
-          }
-        }
-      }
-    return(ties)
-    }
-  
-  # tpad: returns the pad string, n times, defaulting to spaces
-  # n: a number of replications; pad: string to replicate
-  tpad <- function(n=1, pad=" ") {
-    if (n == 0) {
-      return("")
-      }
-    return( paste0(rep(x=pad,times=n),collapse="") )
-    }
-
-  # zformat: formats z values for display in table
-  # z: a real z-value
-  # returns: a formatted string
-  zformat <- function(z) {
-    if (z < 0) {
-      sign <- "-"
-      }
-     else {
-       sign <- " "
-       }
-     leftspaces <- max(2,floor(log10(abs(z)))+2)
-     leftdigits <- floor(abs(z))
-     rightspaces <- 8 - leftspaces
-     rightdigits <- substr(paste0(abs(z) - floor(abs(z)),"00000000"),3,rightspaces+2)
-     return(paste0(sign,leftdigits,".",rightdigits))
-    }
-
-  # centertext: centers a string within a specific width
-  centertext <- function(text, width=80, lmargin=2, rmargin=2) {
-    textwidth <- nchar(text)
-    if (textwidth <= width-lmargin-rmargin) {
-      text <- substr(text, 1, width-lmargin-rmargin)
-      }
-    buff <- (width-lmargin-rmargin-textwidth)
-    if (buff%%2 == 0) {
-      return(paste(paste(rep(" ", buff/2), collapse=""), text, paste(rep(" ", buff/2), collapse=""), collapse=""))
-      }
-     else {
-      return(paste(paste(rep(" ", 1+(buff-1)/2), collapse=""), text, paste(rep(" ", (buff-1)/2), collapse=""), collapse=""))
-      }
-    }
-
-  # dunntestheader: displays Dunn's test table headers.
-  dunntestheader <- function(groupvar, colstart, colstop, rmc) {
-    if (rmc==FALSE) {
-      rlang::inform(message="Col Mean-\U2502")
-      RMCM_head <- "Row Mean \U2502"
-      }
-     else {
-      rlang::inform(message="Row Mean-\U2502")
-      RMCM_head <- "Col Mean \U2502"
-      }
-    groupvalues  <- levels(factor(groupvar))
-    RMCM_tail <- ""
-    for (col in colstart:colstop) {
-      vallab  <- substr(groupvalues[col], 1, 8)
-      pad     <- 8-nchar(vallab)
-      colhead <- paste0(tpad(n=pad),vallab)
-      RMCM_tail <- paste0(RMCM_tail, "   ", substr(colhead, 1, 8), sep="")
-      }
-    rlang::inform(message=paste0(RMCM_head, RMCM_tail, sep=""))  
-    separatorlength = 10 + 11*(colstop-colstart)+1
-    rlang::inform(message=paste0(tpad(n=9, pad="\U2500"), "\U253C", tpad(n=separatorlength, pad="\U2500"), sep=""))
-    }
-
-  # dunntestztable displays Dunn's test z values
-  dunntestztable <- function(groupvar, index, Z, colstart, colstop) {
-    groupvalues  <- levels(factor(groupvar))
-
-    # Row headers
-    vallab  <- substr(groupvalues[index], 1, 8)
-    pad     <- 8-nchar(vallab)
-    rowhead <- paste0(tpad(n=pad), vallab)
-    z_row_head <- paste0(rowhead, " \U2502")
-
-    # Table z entries
-    z_row_tail <- ""
-    for (i in colstart:colstop) {
-      z <- Z[(((index-2)*(index-1))/2) + i]
-      z_row_tail <- paste0(z_row_tail, "  ", zformat(z), sep="")
-      }
-    rlang::inform(message=paste0(z_row_head, z_row_tail, sep=""))
-    }
-
-  # dunntestptable: displays Dunn's test p values
-  dunntestptable <- function(index, P, colstart, colstop, Reject, last) {
-    # p row header
-    p_row_head <- "         \U2502"
-
-    # Table p entries
-    p_row_tail = c(" ")
-    for (i in colstart:colstop) {
-      p <- P[(((index-2)*(index-1))/2) + i]
-      if ( Reject[(((index-2)*(index-1))/2) + i] == 0) {
-        p_row_tail <- paste0(p_row_tail, "    ", sprintf("%1.4f",p), " ", sep="")
-        }
-       else {
-        p_row_tail <- paste0(p_row_tail, "    ", sprintf("%1.4f",p), "*", sep="")
-        }
-      }
-    rlang::inform(message=paste0(p_row_head, p_row_tail, sep=""))
-
-    # Close out with another blank row header
-    if (last == 0) {
-      rlang::inform(message="         \U2502") 
-      }
-    }
-    
-  # alphabetize.factor: alphabetizes a factor
-  # this is very quick and dirty with no checking.
-  alphabetize.factor <- function(x) {
-    return(factor(sort(c(as.character(x)))))
-    }
-
-
+  ##########
   # VALIDATIONS & PREPARATIONS
   # names for output
   xname <- paste(if(is.name(substitute(x))) {deparse(substitute(x))} else {"x"})
   gname <- paste(if(is.name(substitute(g))) {deparse(substitute(g))} else {"group"})
   xaslist <- is.list(x)
   tempg <- 1:length(x)
-  
+
   # casewise deletion of missing data
   # Start dealing with the fact that g may be numeric, string, or factor data
   if (length(g) > 1) {  
+
+    # Case-wise deletion of incomplete data
+    x_miss <- is.na(x)
+    g_miss <- is.na(g)
+    all_miss <- (x_miss | g_miss)
+    x <- x[!all_miss]
+    g <- g[!all_miss]
     if (label==TRUE) {
       if (is.factor(g)) {
-        glevels <- levels(g)
+        glevels <- levels(factor(g, levels=unique(factor(g))))
         }
        else {
-       	g <- factor(g)
+       	g <- factor(g, levels=unique(factor(g)))
         glevels <- levels(g)
         }
       }
      else {
       glevels <- names(table(addNA(g, ifany = TRUE)))
       }
-    Data <- data.frame(x,g)[order(levels(g)[c(g)]),]
+    Data <- data.frame(x,g)[get_order(sort(glevels), g),]
     Data <- Data[!is.na(unlist(Data$x)),]
     Data <- Data[!is.na(Data$g),]
     x <- Data[,1]
-	g <- alphabetize.factor(Data$g)
+    g <- alphabetize.factor(Data$g)
     }
    else {
      g <- c()
@@ -297,6 +66,56 @@ dunn.test <- function(
        }
     x <- as.numeric(unlist(x)[!is.na(unlist(x))])
     }
+  # Check if single.contrast is not the empty string, and if it is a number, or 
+  # should be treated as a label string, prepare a variable to hold either the 
+  # value or the label, and change the value of single.contrast to indicate 
+  # which
+  single.index <- NA
+  single.contrast.type <- ""
+  single.contrast.error.message <- "the single.contrast argument must contain either a numeric value within g, a \nlevel of g if g is a factor, a string value within g, or numerically indicate \nwhich single group within x will be the contrast if g is omitted."
+  if (!is.na(single.contrast)) {
+    # Validate that single.contrast is a single value
+    if (length(single.contrast) > 1) {
+      rlang::abort(single.contrast.error.message)
+      }
+    # Validate that single.contrast is a single value within g, or that it 
+    # indexes a group within x
+    if (!(FALSE %in% !is.na(g)) & !(single.contrast %in% g)) {
+      rlang::abort(single.contrast.error.message)
+      }
+    if ((FALSE %in% !is.na(g)) & (single.contrast > length(x) | single.contrast < 1)) {
+      rlang::abort(single.contrast.error.message)
+      }
+    # Assign single.value if single.contrast is numeric
+    if (is_numeric_like(single.contrast)) {
+      single.value <- as.numeric(single.contrast)
+      single.contrast.type <- "single.value"
+      if (!(FALSE %in% !is.na(g))) {
+        single.label <- paste0(gname, "=", single.contrast, sep="") 
+        }
+      }
+     else {
+      single.label = single.contrast 
+      single.contrast.type = "single.label"
+      }
+    }        # Close if (!is.na(single.contrast)) 
+  # Index single.value in g or x if single.contrast is numeric
+  if (single.contrast.type == "single.value") {
+    if (!(FALSE %in% !is.na(g))) {
+      single.index <- match(single.contrast, unique(g))
+      k = length(g)
+      }
+    if ((FALSE %in% !is.na(g))) {
+      single.index <- single.value
+      k = length(x)
+      }
+    }        # Close if (single.contrast.type == "single.value")
+
+  # Index single.label in g if single.contrast is string
+  if (single.contrast.type == "single.label") {
+    single.index <- match(single.contrast, unique(g))
+    k = length(g)
+    }        # Close if (single.contrast.type == "single.label")
 
   # validate method
   if (length(method) > 1) {
@@ -342,16 +161,15 @@ dunn.test <- function(
     rlang::abort(message="x must contain a numeric vector of data values, or a list of numeric data vectors.")
     }
   # validate that g is not missing if x is a vector
-  if (!xaslist & TRUE %in% is.na(g) ) {
+  if (!xaslist & TRUE %in% (FALSE %in% !is.na(g)) ) {
     rlang::abort(message="when specifying x as a vector, you must include g.")
     }
   # validate that g is not NA
-  if (length(g) > 1 & TRUE %in% is.na(g)) {
+  if (length(g) > 1 & TRUE %in% (FALSE %in% !is.na(g))) {
     rlang::abort(message="g must have no missing values.")
     }
   # validate that g is factor or vector.
   if (length(g) > 1 & ( !is.factor(g) & !is.vector(g) ) ) {
-    
     rlang::abort(message="g must be a factor, character vector, or integer vector.")
     }
   # validate that g is a vector of mode = character or mode = integer.
@@ -361,16 +179,18 @@ dunn.test <- function(
       }
     }
 
+  ##########
   # CALCULATIONS
+  
   out <- NULL
   if (xaslist & length(g)==1) {
-    kwallis.test(x, 1:length(x), pass=1) -> out
+    kwallis.test(x, 1:length(x)) -> out
     }
   if (length(g)>1 & xaslist) {
-    kwallis.test(x, g, pass=1) -> out
+    kwallis.test(x, g) -> out
     }
   if (length(g)>1 & !xaslist) {
-    kwallis.test(x, g, pass=0) -> out
+    kwallis.test(x, g) -> out
     }
 
   if (kw==TRUE) {
@@ -383,9 +203,21 @@ dunn.test <- function(
     N    <- out$N
     Data <- out$Data
     k    <- df+1
-    m    <- k*(k-1)/2
+    if (is.na(single.contrast)) {
+      m    <- k*(k-1)/2
+      }
+    if (!is.na(single.contrast)) {
+      m    <- k-1
+      }
     Z    <- rep(NA,m)
     P    <- rep(NA,m)
+
+  # Prepare to modify behavior if single.contrast has been specified
+  if (!is.na(single.contrast)) {
+    table <- FALSE
+    list <- TRUE
+    rmc <- FALSE
+    }
 
   #calculate ties adjustment to be used in pooled variance estimate later
   ranks <- Data[,4]
@@ -412,22 +244,44 @@ dunn.test <- function(
 
   # Calculate approximate Z test statistics
   Z <- rep(0,m)
-  for (i in 2:k) {
-    for (j in 1:(i-1)) {
-      ni <- sum(Data[,3]==i)
-      nj <- sum(Data[,3]==j)
-      meanranki <- mean(Data[,4][Data[,3]==i])
-      meanrankj <- mean(Data[,4][Data[,3]==j])
-      if (rmc==TRUE) {
+  if (is.na(single.contrast)) {
+    for (i in 2:k) {
+      for (j in 1:(i-1)) {
+        ni <- sum(Data[,3]==i)
+        nj <- sum(Data[,3]==j)
+        meanranki <- mean(Data[,4][Data[,3]==i])
+        meanrankj <- mean(Data[,4][Data[,3]==j])
+        if (rmc==TRUE) {
+          z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+          }
+         else {
+          z <- (meanrankj - meanranki) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+          }
+        index <- ((i-2)*(i-1)/2) + j
+        Z[index] <- z
+        }
+      }        # Close for (i in 2:k)
+    }        # Close if (is.na(single.contrast))
+   else {
+    # Calculate comparisons only between the group in single.comparison and
+    # each remaining group
+    for (j in 1:k) {
+      if (single.index != j) {
+        jindex <- j
+        if (single.index < j) {
+          jindex <- j - 1
+          }
+        ni <- sum(Data[,3]==single.index)
+        nj <- sum(Data[,3]==j)
+        meanranki <- mean(Data[,4][Data[,3]==single.index])
+        meanrankj <- mean(Data[,4][Data[,3]==j])
         z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
-        }
-       else {
-        z <- (meanrankj - meanranki) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
-        }
-      index <- ((i-2)*(i-1)/2) + j
-      Z[index] <- z
-      }
-    }
+        if (jindex < k) {
+          Z[jindex] <- z
+          }
+        }        # Close if (single.index != j)
+      }        # Close for (j in 1:k)
+    }        # Close else
     
   # Calculate p-values for Z statistics, and adjust as needed
   # If p = P(Z >= |z|)
@@ -439,193 +293,10 @@ dunn.test <- function(
    	P <- 2*pnorm(abs(Z), lower.tail=FALSE)
    	}
   #calculate adjusted p-values based on method argument
-  Reject <- rep(0,m)
-  # No adjustment for multiple comparisons
-  if (tolower(c(method))=="none") {
-    P.adjust <- P
-    # If p = P(Z >= |z|)
-    if (altp==FALSE) {
-      Reject <- P.adjust <= alpha/2
-      }
-     # Otherwise, if p= P(|Z| >= |z|)
-     else {
-      Reject <- P.adjust <= alpha
-      }
-    }
-  # Control FWER using (Dunn's) Bonferroni
-  if (tolower(c(method))=="bonferroni") {
-    P.adjust <- pmin(1,P*m)
-    # If p = P(Z >= |z|)
-    if (altp==FALSE) {
-      Reject <- P.adjust <= alpha/2
-      }
-     # Otherwise, if p= P(|Z| >= |z|)
-     else {
-      Reject <- P.adjust <= alpha
-      }
-    }
-  # Control FWER using Šidák
-  if (tolower(c(method))=="sidak") {
-    P.adjust <- pmin(1,1 - (1-P)^m)
-    # If p = P(Z >= |z|)
-    if (altp==FALSE) {
-      Reject <- P.adjust <= alpha/2
-      }
-     # Otherwise, if p= P(|Z| >= |z|)
-     else {
-      Reject <- P.adjust <= alpha
-      }
-    }
-  # Control FWER using Holm(-Bonferroni)
-  if (tolower(c(method))=="holm") {
-    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
-    Psort <- Psort[,order(Psort[1,])]
-    for (i in 1:m) {
-      adjust <- m+1-i
-      Psort[1,i] <- pmin(1, Psort[1,i]*adjust)
-      # If p = P(Z >= |z|)
-      if (altp==FALSE) {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha/2
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha/2) & Psort[3,i-1] != 0)
-          }
-        }
-       # Otherwise, if p = P(|Z| >= |z|)
-       else {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha) & Psort[3,i-1] != 0)
-          }
-        }
-      }
-    Psort <- Psort[,order(Psort[2,])]
-    P.adjust <- Psort[1,]
-    Reject <- Psort[3,]
-    }
-  # Control FWER using Holm-Šidák
-  if (tolower(c(method))=="hs") {
-    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
-    Psort <- Psort[,order(Psort[1,])]
-    for (i in 1:m) {
-      adjust <- m+1-i
-      Psort[1,i] <- pmin(1, (1 - ((1 - Psort[1,i])^adjust)))
-      # If p = P(Z >= |z|)
-      if (altp==FALSE) {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha/2
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha/2) & Psort[3,i-1] != 0)
-          }
-        }
-       # Otherwise, if p = P(|Z| >= |z|)
-       else {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha) & Psort[3,i-1] != 0)
-          }
-        }      }
-    Psort <- Psort[,order(Psort[2,])]
-    P.adjust <- Psort[1,]
-    Reject <- Psort[3,]
-    }
-  # Control FWER using Hochberg
-  if (tolower(c(method))=="hochberg") {
-    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
-    Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
-    for (i in 1:m) {
-      adjust <- i
-      Psort[1,i] <- min(1,Psort[1,i]*adjust)
-      # If p = P(Z >= |z|)
-      if (altp==FALSE) {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha/2
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
-          }
-        }
-       # Otherwise, if p = P(|Z| >= |z|)
-       else {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha) | Psort[3,i-1] == 1)
-          }
-        }
-      }
-    Psort <- Psort[,order(Psort[2,])]
-    P.adjust <- Psort[1,]
-    Reject <- Psort[3,]
-    }
-  # Control FDR using Benjamini-Hochberg
-  if (tolower(c(method))=="bh") {
-    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
-    Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
-    for (i in 1:m) {
-      adjust <- (m/(m+1-i))
-      Psort[1,i] <- min(1,Psort[1,i]*adjust)
-      # If p = P(Z >= |z|)
-      if (altp==FALSE) {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha/2
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
-          }
-        }
-       # Otherwise, if p = P(|Z| >= |z|)
-       else {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha) | Psort[3,i-1] == 1)
-          }
-        }
-      }
-    Psort <- Psort[,order(Psort[2,])]
-    P.adjust <- Psort[1,]
-    Reject <- Psort[3,]
-    }
-  # Control FDR using Benjamini-Yekuteili
-  if (tolower(c(method))=="by") {
-    Psort <- matrix(c(P,1:m,rep(0,m)), 3, m, byrow=TRUE)
-    Psort <- Psort[,order(Psort[1,], decreasing=TRUE)]
-    for (i in 1:m) {
-      adjust <- (m/(m+1-i))*sum(1/(1:m))
-      Psort[1,i] <- min(1,Psort[1,i]*adjust)
-      # If p = P(Z >= |z|)
-      if (altp==FALSE) {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha/2
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha/2) | Psort[3,i-1] == 1)
-          }
-        }
-       # Otherwise, if p = P(|Z| >= |z|)
-       else {
-        if (i==1) {
-          Psort[3,i] <- Psort[1,i] <= alpha
-          }
-         else {
-          Psort[3,i] <- ((Psort[1,i] <= alpha) | Psort[3,i-1] == 1)
-          }
-        }
-      }
-    Psort <- Psort[,order(Psort[2,])]
-    P.adjust <- Psort[1,]
-    Reject <- Psort[3,]
-    }
-
+  MCA <- multiple_comparisons_adjustment(P=P, m=m, method=method, alpha=alpha, altp=altp)
+  P.adjust <- MCA$P.adjust
+  Reject <- MCA$Reject
+  
   # OUTPUT
   rlang::inform(message="")
   if (table==TRUE | list==TRUE) {
@@ -638,8 +309,22 @@ dunn.test <- function(
     rlang::inform(message=centertext(title))
     rlang::inform(message=paste0(centertext(Name), sep=""))
     }
-
+  # If single.contrast is specified then:
+  # suppress table
+  # output list
+  # set rmc is FALSE
+  # notify user
+  if (!is.na(single.contrast)) {
+    if ((TRUE %in% is.na(g))) {
+      single.contrast.title <- paste("\nComparisons limited to group number ",single.contrast," vs every other group",sep="")
+      }
+     else {
+      single.contrast.title <- paste("\nComparisons limited to ",gname,"=",single.contrast," vs every other group",sep="")
+      }
+    rlang::inform(message=single.contrast.title)
+    }
   if (table==TRUE) {
+    rlang::inform(message="")
     # Need to determine how many tables (reps) to output
     reps      <- floor((k-1)/6)
     laststart <- (reps*6) + 1
@@ -719,8 +404,18 @@ dunn.test <- function(
           }
         }
       }
-      
-    rlang::inform(message="")
+    }
+
+  # Prepare to modify behavior if single.contrast has been specified
+  if (is.na(single.index)) {
+    kindex    <- k
+    liststart <- 2
+    offset    <- 1
+    }
+   else {
+    kindex    <- k - 1
+    liststart <- 1
+    offset    <- 0
     }
 
   # Output pairwise comparisons as a list if requested.
@@ -733,70 +428,101 @@ dunn.test <- function(
 
     # Output list header
     if (tolower(method)=="none") {
-      rlang::inform(message="List of pairwise comparisons: Z statistic (p-value)")
+      rlang::inform(message="\nList of pairwise comparisons: Z statistic (p-value)")
       }
      else {
-      rlang::inform(message="List of pairwise comparisons: Z statistic (adjusted p-value)")
+      rlang::inform(message="\nList of pairwise comparisons: Z statistic (adjusted p-value)")
       }
     list_head_length <- max(nchar(groupvalues)) + tail(sort(nchar(unique(groupvalues))), n=2)[1] + 4
     rlang::inform(message=paste0(paste0(rep("\U2500", list_head_length), collapse=""), "\U252C", paste0(rep("\U2500", 19+max(Reject)), collapse=""), collapse="", sep=""))
     index <- 0
-    for (i in 2:k) {
-      for (j in 1:(i-1)) {
-        index <- index + 1
-        buffer <- list_head_length - (nchar(groupvalues[i]) + nchar(groupvalues[j]) + 4)
-        if ( Reject[index] == 0) {
-          pformatted <- paste0("(", sprintf("%1.4f", P.adjust[index]), ")", sep="")
-          }
-         else {
-         	pformatted <- paste0("(", sprintf("%1.4f", P.adjust[index]), ")", "*", sep="")
-         	}
-        if (rmc==FALSE) {
-          rlang::inform(message=paste0(groupvalues[j]," - ",groupvalues[i],paste0(rep(" ",buffer), collapse="")," \U2502 ",zformat(Z[index]), " ",pformatted, sep=""))
-          }
-        if (rmc==TRUE) {
-          rlang::inform(message=paste0(groupvalues[i]," - ",groupvalues[j],paste0(rep(" ",buffer), collapse="")," \U2502 ",zformat(Z[index]), " ",pformatted, sep=""))
+    for (i in liststart:k) {
+      for (j in 1:(i-offset)) {
+        # The below conditional allows this nested loop to work when 
+        # single.contrast has been specified
+        if ((single.index != i & i == j) | is.na(single.index)) {
+          index <- index + 1
+          labeli <- groupvalues[i]
+          if (is.na(single.index)) {
+            labelj <- groupvalues[j]
+            }
+          else {
+            labelj <- groupvalues[single.index]
+            }
+          buffer <- list_head_length - (nchar(labeli) + nchar(labelj) + 4)
+          if ( Reject[index] == 0) {
+            pformatted <- paste0("(", sprintf("%1.4f", P.adjust[index]), ")", sep="")
+            }
+           else {
+           	pformatted <- paste0("(", sprintf("%1.4f", P.adjust[index]), ")", "*", sep="")
+           	}
+          if (rmc==FALSE) {
+            rlang::inform(message=paste0(labelj," - ",labeli,paste0(rep(" ",buffer), collapse="")," \U2502 ",zformat(Z[index]), " ",pformatted, sep=""))
+            }
+          if (rmc==TRUE) {
+            rlang::inform(message=paste0(labeli," - ",labelj,paste0(rep(" ",buffer), collapse="")," \U2502 ",zformat(Z[index]), " ",pformatted, sep=""))
+            }
           }
         }
       }
-  if (interpret==TRUE) {
-      rlang::inform(message="")
     }
-  }
+
+  # Manage interpretation output
   symbol <- "\U03B1"
   procedure <- ""
-  if (method == "holm" | method == "sidak" | method == "hs" | method == "hochberg") symbol <- "FWER" 
-  if (method == "bh" | method == "by") symbol <- "FDR"
+  unadj <- ""
+  adjust <- ""
+  if (method == "bonferroni" | method == "sidak" | method == "holm" | method == "sidak" | method == "hs" | method == "hochberg") {
+    symbol <- "FWER" 
+    adjust <- "adjusted "
+    unadj <- "(unadjusted) "
+    }
+  if (method == "bh" | method == "by") {
+    symbol <- "FDR"
+    adjust <- "adjusted "
+    unadj <- "(unadjusted) "
+    }
   if (method == "holm" | method == "hs" | method == "hochberg" | method == "bh" | method == "by") procedure <- " with stopping rule" 
   if (interpret==TRUE) {
-    rlang::inform(message=paste0(symbol, " = ",alpha, sep=""))
+    rlang::inform(message=paste0("\n",symbol, " = ",alpha, sep=""))
     # If p = P(Z >= |z|)
     if (altp==FALSE) {
-      rlang::inform(message=paste0("Reject Ho if p \U2264 ", symbol, "/2", procedure, ", where p = Pr(Z \U2265 |z|)"))
+      rlang::inform(message=paste0("Reject Ho if ", adjust, "p \U2264 ", symbol, "/2", procedure, ", where ", unadj, "p = Pr(Z \U2265 |z|)"))
       }
      # Otherwise, if p = P(|Z| <= |z|)
      else {
-      rlang::inform(message=paste0("Reject Ho if p \U2264 ", symbol, procedure, ", where p = Pr(|Z| \U2265 |z|)"))
+      rlang::inform(message=paste0("Reject Ho if ", adjust, "p \U2264 ", symbol, procedure, ", where ", unadj, "p = Pr(|Z| \U2265 |z|)"))
       }
     }
 
   # Create comparisons variable for returned values (whether the list option
   # is TRUE or FALSE
-  comparisons <- rep(NA,(k*(k-1)/2))
+  comparisons <- rep(NA,m)
   groupvalues  <- levels(factor(g))
-  index <- 0
-  for (i in 2:k) {
-    for (j in 1:(i-1)) {
-      index <- index + 1
-      if (rmc==FALSE) {
-        comparisons[index] <- paste0(groupvalues[j]," - ",groupvalues[i])
-        }
-      if (rmc==TRUE) {
-        comparisons[index] <- paste0(groupvalues[i]," - ",groupvalues[j])
+    index <- 0
+    for (i in liststart:k) {
+      for (j in 1:(i-offset)) {
+        # The below conditional allows this nested loop to work when 
+        # single.contrast has been specified
+        if ((single.index != i & i == j) | is.na(single.index)) {
+          index <- index + 1
+          labeli <- groupvalues[i]
+          if (is.na(single.index)) {
+            labelj <- groupvalues[j]
+            }
+          else {
+            labelj <- groupvalues[single.index]
+            }
+          if (rmc==FALSE) {
+            comparisons[index] <- paste0(labelj," - ",labeli)
+            }
+          if (rmc==TRUE) {
+            comparisons[index] <- paste0(labeli," - ",labelj)
+            }
+          }
         }
       }
-    }
-   
+     
   # If p = P(Z <= |z|)
   if (altp==FALSE) {
    invisible(list(chi2=chi2, Z=Z, P=P, P.adjusted=P.adjust, comparisons=comparisons))

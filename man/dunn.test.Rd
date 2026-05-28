@@ -8,14 +8,20 @@
 \title{Dunn's Test}
 \description{Performs Dunn's test of multiple comparisons using rank sums}
 \usage{
-dunn.test  (x, g=NA, method=p.adjustment.methods, kw=TRUE, label=TRUE, 
+dunn.test  (
+      x, 
+      g=NA,
+      method=p.adjustment.methods, 
+      kw=TRUE, 
+      label=TRUE, 
       wrap=FALSE, 
       table=TRUE, 
       list=FALSE, 
       rmc=FALSE, 
       alpha=0.05, 
       altp=FALSE, 
-      interpret=TRUE)
+      interpret=TRUE, 
+      single.contrast=NA)
 
 p.adjustment.methods
 # c("none", "bonferroni", "sidak", "holm", "hs", "hochberg", "bh", "by")
@@ -33,8 +39,9 @@ p.adjustment.methods
  \item{alpha}{the nominal level of significance used in the step-up/step-down multiple comparisons procedures (Holm, Holm-\enc{Šidák}{Sidak}, Hochberg, Benjamini-Hochberg, and Benjamini-Yekutieli).}
  \item{altp}{if \option{TRUE} then express \emph{p}-values in alternative format.  The default is to express \emph{p}-value = P(\emph{Z} \eqn{\ge} |\emph{z}|), and reject Ho if \emph{p} \eqn{\le} \eqn{\alpha}/2.  When the \code{altp} option is used, \emph{p}-values are instead expressed as \emph{p}-value = P(|\emph{Z}| \eqn{\ge} |\emph{z}|), and reject Ho if \emph{p} \eqn{\le} \eqn{\alpha}.  \strong{These two expressions give identical test results.} Use of \code{altp} is therefore merely a semantic choice.}
  \item{interpret}{output information about interpreting \emph{p}-values in light of raw significance level, \acronym{FWER}, or \acronym{FDR}.}
+ \item{single.contrast}{if supplied inidcates a single group that will be contrasted in pairwise tests against each other group (i.e., instead of all possible pairwise comparisons between all groups).  It must take a single numeric value within \code{g}, a level within \code{g} if \code{g} is a factor, a string value within g, or numerically indicate which group within \code{x} will be the contrast if \code{g} is omitted.  \code{single.contrast} changes the adjusted p-values when \code{method} is a value other than \code{none} because the number of comparisons \eqn{m} now equals \eqn{k - 1}, instead of \eqn{m = k(k-1)/2}.  If \code{single.contrast} is specified, then the output will include only a list of comparisons (i.e. as per the \code{list} option), and the output table will be omitted.}
 }
-\details{\code{dunn.test} computes Dunn's test (1964) for stochastic dominance and reports the results among multiple pairwise comparisons after a Kruskal-Wallis test for stochastic dominance among \emph{k} groups (Kruskal and Wallis, 1952).  The interpretation of stochastic dominance requires an assumption that the \acronym{CDF} of one group does not cross the \acronym{CDF} of the other.  \code{dunn.test} makes \emph{m} = \emph{k}(\emph{k}-1)/2 multiple pairwise comparisons based on Dunn's \emph{z}-test-statistic approximations to the actual rank statistics.  The null hypothesis for each pairwise comparison is that the probability of observing a randomly selected value from the first group that is larger than a randomly selected value from the second group equals one half; this null hypothesis corresponds to that of the Wilcoxon-Mann-Whitney rank-sum test.  Like the rank-sum test, if the data can be assumed to be continuous, and the distributions are assumed identical except for a difference in location, Dunn's test may be understood as a test for median difference.  \code{dunn.test} accounts for tied ranks.  
+\details{\code{dunn.test} computes Dunn's test (1964) for stochastic superiority and reports the results among multiple pairwise comparisons after a Kruskal-Wallis test for stochastic superiority among \emph{k} groups (Kruskal and Wallis, 1952).  \code{dunn.test} makes \emph{m} = \emph{k}(\emph{k}-1)/2 multiple pairwise comparisons (but see the \code{single.contrast} option) based on Dunn's \emph{z}-test-statistic approximations to the actual rank statistics.  The null hypothesis for each pairwise comparison is that the probability of observing a randomly selected value from the first group that is larger than a randomly selected value from the second group equals one half; this null hypothesis corresponds to that of the Wilcoxon-Mann-Whitney rank-sum test.  \code{dunn.test} accounts for tied ranks.  
 
 \code{dunn.test} outputs both \emph{z}-test-statistics for each pairwise comparison and the \emph{p}-value = P(\emph{Z} \eqn{\ge} |\emph{z}|) for each. Reject Ho based on \emph{p} \eqn{\le} \eqn{\alpha}/2 (and in combination with \emph{p}-value ordering for stepwise \code{method} options).  If you prefer to work with \emph{p}-values expressed as \emph{p}-value = P(|\emph{Z}| \eqn{\ge} |\emph{z}|) use the \code{altp=TRUE} option, and reject Ho based on \emph{p} \eqn{\le} \eqn{\alpha} (and in combination with \emph{p}-value ordering for stepwise \code{method} options).  These are exactly equivalent rejection decisions.
 
@@ -84,8 +91,8 @@ Because the sequential step-up/step-down tests rejection decisions depend on bot
  \item{Z}{a vector of all \emph{m} of Dunn \emph{z} test statistics.}
  \item{P}{a vector of \emph{p}-values corresponding to \code{Z}. --OR--}
  \item{altP}{a vector of \emph{p}-values corresponding to \code{Z} when using the \code{altp=TRUE} option.}
- \item{P.adjust}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}). --OR--}
- \item{altP.adjust}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}) when using the \code{altp=TRUE} option.}
+ \item{P.adjusted}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}). --OR--}
+ \item{altP.adjusted}{a vector of \emph{p}-values corresponding to \code{Z}, but adjusted for multiple comparisons as per \code{method} (\code{P} = \code{P.adjust} if \code{method}=\code{"none"}) when using the \code{altp=TRUE} option.}
  \item{comparisons}{a vector of strings labeling each pairwise comparison, as qualified by the \code{rmc} option, using either the variable values, or the factor labels or (or factor values if unlabeled). These labels match the corresponding position in the \code{Z}, \code{P}, and \code{P.adjust} vectors.}
  }
 \author{
@@ -96,6 +103,13 @@ Please contact me with any questions, bug reports or suggestions for improvement
 [1] \tab a copy of the data (de-labeled or anonymized is fine),\cr
 [2] \tab a copy of the command syntax used, and\cr
 [3] \tab a copy of the exact output of the command.\cr
+}
+
+\subsection{Suggested citation}{
+Dinno, A. (2026) \code{dunn.test} version 1.4.0: Dunn's test of multiple comparisons using rank sums. R software package. URL: \url{https://cran.r-project.org/package=dunn.test}.}
+
+\subsection{See also}{
+\code{dunn.test} is also available for Stata as \href{https://alexisdinno.com/stata/dunntest.html}{dunntest}.
 }
 }
 \references{
@@ -116,30 +130,47 @@ Kruskal, W.  H. and Wallis, A.  (1952)  Use of ranks in one-criterion variance a
 \enc{Šidák}{Sidak}, Z.  (1967)  Rectangular confidence regions for the means of multivariate normal distributions.  \emph{Journal of the American Statistical Association}.  \bold{62}, 626--633.  <\doi{10.1080/01621459.1967.10482935}>.
 }
 \examples{
-## Example cribbed and modified from the kruskal.test documentation
-## Hollander & Wolfe (1973), 116.
-## Mucociliary efficiency from the rate of removal of dust in normal
-##  subjects, subjects with obstructive airway disease, and subjects
-##  with asbestosis.  
+
+# Example cribbed and modified from the kruskal.test documentation
+# Thomson, M.L. and Short, M.D. (1969). Mucociliary function in 
+#  health, chronic obstructive airway disease, and asbestosis.
+#  Journal of Applied Physiology 26(5):535–539.
+# Mucociliary efficiency from the rate of removal of dust in normal
+#  subjects, subjects with obstructive airway disease, and subjects
+#  with asbestosis.  
 x <- c(2.9, 3.0, 2.5, 2.6, 3.2) # normal subjects
 y <- c(3.8, 2.7, 4.0, 2.4)      # with obstructive airway disease
 z <- c(2.8, 3.4, 3.7, 2.2, 2.0) # with asbestosis
 dunn.test(x=list(x,y,z))
 
+# Using factor g, omitting Kruskal-Wallis test and using Dunn's 
+# Bonferroni adjustment
 x <- c(x, y, z)
 g <- factor(rep(1:3, c(5, 4, 5)),
             labels = c("Normal",
                        "COPD",
                        "Asbestosis"))
-dunn.test(x, g)
+dunn.test(x, g, kw=FALSE, method="bonferroni")
 
-## Example based on home care data from Dunn (1964)
+# Example based on home care data from Dunn (1964)
 data(homecare)
-attach(homecare)
-dunn.test(occupation, eligibility, method="hs", list=TRUE)
+dunn.test(
+ homecare$occupation, 
+  homecare$eligibility, 
+  method="bh", 
+  list=TRUE)
 
-## Air quality data set illustrates differences in different
-## multiple comparisons adjustments
+# Restricting the above example to only contrast a single group. Note
+# the difference in the adjusted p-value for Eligible vs Responsible 
+# person unable.
+dunn.test(
+ homecare$occupation, 
+ homecare$eligibility, 
+ method="bh", 
+ single.contrast="Eligible")
+
+# Air quality data set illustrates differences in different
+# multiple comparisons adjustments
 attach(airquality)
 dunn.test(Ozone, Month, kw=FALSE, method="bonferroni")
 dunn.test(Ozone, Month, kw=FALSE, method="hs")
