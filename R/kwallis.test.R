@@ -1,29 +1,7 @@
 # kwallis.test: a custom Kruskal Wallis test function to support dunn.test
-# Date: April 3, 2026
+# Date: June 5, 2026
 kwallis.test <- function(x=NA, g=NA) {
-  # FUNCTIONS
-  # tiedranks: enumerates tied values from a vector of ranks
-  # ranks: a vector of rank values
-  # returns: ties, a vector of values that are tied
-  tiedranks <- function(ranks) {
-    ranks <- sort(ranks)
-    #enumerate tied values
-    ties <- c()
-    for (i in 2:length(ranks)) {
-      if (ranks[i-1] == ranks[i]) {
-        if (length(ties) > 0) {
-          if (ranks[i-1] != tail(ties,n=1)) {
-            ties <- c(ties,ranks[i-1])
-            }
-          }
-         else {
-          ties <- c(ranks[i-1])
-          }
-        }
-      }
-    return(ties)
-    }
-  
+
   #set up data by lists
   if (is.list(x)) {
     N <- 0
@@ -60,7 +38,6 @@ kwallis.test <- function(x=NA, g=NA) {
     Data[,4] <- rank(Data[,2], ties.method="average", na.last=NA)
     }
   k <- length(unique(Data[,3]))
-
   #calculate ties adjustment
   ranks <- Data[,4]
   ranks <- ranks[!is.na(ranks)]
@@ -77,8 +54,8 @@ kwallis.test <- function(x=NA, g=NA) {
 
   #calculate H
   ranksum <- 0
-  for (i in 1:k) {
-    ranksum <- ranksum + ((sum(Data[,4][Data[,3]==i]))^2)/(sum(Data[,3]==i))
+  for (i in unique(Data[,3])) {
+    ranksum <- ranksum + ((sum(as.numeric(Data[,4][Data[,3]==i])))^2)/(sum(as.numeric(Data[,3]==i)))
     }
   H  <- ((12/(N*(N+1)))*ranksum - 3*(N+1))/tiesadj
   df <- k-1
@@ -86,6 +63,6 @@ kwallis.test <- function(x=NA, g=NA) {
 
   #present output
   output <- paste("Kruskal-Wallis chi-squared = ",round(H,digits=4),", df = ",df,", p-value = ",round(p,digits=2),"\n" ,sep="")
-
+  
   invisible(list(output=output,H=H,df=df,p=p,N=N,Data=Data))
   }

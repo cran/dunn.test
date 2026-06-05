@@ -1,14 +1,14 @@
-e79b5ccad3f68b98b1733d648f010678 *DESCRIPTION
+4dd6bc3d6dfd6622fae71b31521aaa75 *DESCRIPTION
 59ab7678a16b56bfe03132bccf8efce7 *NAMESPACE
 c2a00b8a58c0e0a31a7262a1061bf1da *R/all.integers.R
 b91d661b4ac78c32e39fb3f2726a1b3f *R/alphabetize.factor.R
 0061a350896b10c5f438ef1c21c349d7 *R/centertext.R
-1fa87a2fc192536f6aebce18973075ca *R/dunn.test.R
+d18d7e79f0abf0e8f56ad23755448a8a *R/dunn.test.R
 a580dd55267fc9b47b43bc2ab9173576 *R/dunntestheader.R
 3862292171c06efa52c790a4b632b446 *R/dunntestptable.R
 3465f4211ef661fa0118049585e67dbe *R/dunntestztable.R
 cc638784c85cfea452372c308d7f084d *R/get_order.R
-75a1c2422012ffde9373fdb5f9c367d1 *R/kwallis.test.R
+472257ee799a32cfbce0742ff18ec398 *R/kwallis.test.R
 b56699ffbe882a0abc0f4d21beff229e *R/multiple_comparisons_adjustment.R
 c7c32ca1ce009801c91fe3f3cd19d3d1 *R/pad.left.R
 4637c7ed804b1beec9e5fd0ba2ad9874 *R/pad.spaces.R

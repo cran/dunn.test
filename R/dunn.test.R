@@ -1,7 +1,7 @@
 # Perform Dunn's test of multiple comparisons using rank sums
-# Version: 1.4.0
+# Version: 1.4.1
 # Author: Alexis Dinno
-# Date: May 23, 2026
+# Date: June 4, 2026
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
@@ -31,7 +31,7 @@ dunn.test <- function(
 
   # casewise deletion of missing data
   # Start dealing with the fact that g may be numeric, string, or factor data
-  if (length(g) > 1) {  
+  if (length(g) > 1) {
 
     # Case-wise deletion of incomplete data
     x_miss <- is.na(x)
@@ -39,6 +39,8 @@ dunn.test <- function(
     all_miss <- (x_miss | g_miss)
     x <- x[!all_miss]
     g <- g[!all_miss]
+    Data <- data.frame(x,g)
+    Data <- Data[order(Data[,2], Data[,1]),]
     if (label==TRUE) {
       if (is.factor(g)) {
         glevels <- levels(factor(g, levels=unique(factor(g))))
@@ -51,11 +53,8 @@ dunn.test <- function(
      else {
       glevels <- names(table(addNA(g, ifany = TRUE)))
       }
-    Data <- data.frame(x,g)[get_order(sort(glevels), g),]
-    Data <- Data[!is.na(unlist(Data$x)),]
-    Data <- Data[!is.na(Data$g),]
     x <- Data[,1]
-    g <- alphabetize.factor(Data$g)
+    g <- Data[,2]
     }
    else {
      g <- c()
@@ -66,6 +65,7 @@ dunn.test <- function(
        }
     x <- as.numeric(unlist(x)[!is.na(unlist(x))])
     }
+
   # Check if single.contrast is not the empty string, and if it is a number, or 
   # should be treated as a label string, prepare a variable to hold either the 
   # value or the label, and change the value of single.contrast to indicate 
@@ -165,7 +165,7 @@ dunn.test <- function(
     rlang::abort(message="when specifying x as a vector, you must include g.")
     }
   # validate that g is not NA
-  if (length(g) > 1 & TRUE %in% (FALSE %in% !is.na(g))) {
+  if (length(g) > 1 & TRUE %in% (FALSE %in% !is.na(g)) ) {
     rlang::abort(message="g must have no missing values.")
     }
   # validate that g is factor or vector.
@@ -184,7 +184,7 @@ dunn.test <- function(
   
   out <- NULL
   if (xaslist & length(g)==1) {
-    kwallis.test(x, 1:length(x)) -> out
+   kwallis.test(x, 1:length(x)) -> out
     }
   if (length(g)>1 & xaslist) {
     kwallis.test(x, g) -> out
@@ -209,7 +209,7 @@ dunn.test <- function(
     if (!is.na(single.contrast)) {
       m    <- k-1
       }
-    Z    <- rep(NA,m)
+    Z <- rep(0,m)
     P    <- rep(NA,m)
 
   # Prepare to modify behavior if single.contrast has been specified
@@ -243,16 +243,15 @@ dunn.test <- function(
     }
 
   # Calculate approximate Z test statistics
-  Z <- rep(0,m)
   if (is.na(single.contrast)) {
     for (i in 2:k) {
       for (j in 1:(i-1)) {
-        ni <- sum(Data[,3]==i)
-        nj <- sum(Data[,3]==j)
-        meanranki <- mean(Data[,4][Data[,3]==i])
-        meanrankj <- mean(Data[,4][Data[,3]==j])
+        ni <- sum(as.numeric(Data[,3]==unique(Data[,3])[i]))
+        nj <- sum(as.numeric(Data[,3]==unique(Data[,3])[j]))
+        meanranki <- mean(as.numeric(Data[,4][Data[,3]==unique(Data[,3])[i]]))
+        meanrankj <- mean(as.numeric(Data[,4][Data[,3]==unique(Data[,3])[j]]))
         if (rmc==TRUE) {
-          z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+         z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
           }
          else {
           z <- (meanrankj - meanranki) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
@@ -271,10 +270,10 @@ dunn.test <- function(
         if (single.index < j) {
           jindex <- j - 1
           }
-        ni <- sum(Data[,3]==single.index)
-        nj <- sum(Data[,3]==j)
-        meanranki <- mean(Data[,4][Data[,3]==single.index])
-        meanrankj <- mean(Data[,4][Data[,3]==j])
+        ni <- sum(as.numeric(Data[,3]==unique(Data[,3])[single.index]))
+        nj <- sum(as.numeric(Data[,3]==unique(Data[,3])[j]))
+        meanranki <- mean(as.numeric(Data[,4][Data[,3]==unique(Data[,3])[single.index]]))
+        meanrankj <- mean(as.numeric(Data[,4][Data[,3]==unique(Data[,3])[j]]))
         z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
         if (jindex < k) {
           Z[jindex] <- z
@@ -301,19 +300,15 @@ dunn.test <- function(
   rlang::inform(message="")
   if (table==TRUE | list==TRUE) {
     if ((TRUE %in% is.na(g))) {
-      title <- paste("Dunn's Pairwise Comparison of ",xname," across ",k," groups",sep="")
+      title <- paste("Dunn's Pairwise Comparison of ", xname, " across ", k, " groups", sep="")
       }
      else {
-      title <- paste("Dunn's Pairwise Comparison of ",xname," by ",gname,sep="")
+      title <- paste("Dunn's Pairwise Comparison of ", xname, " by ", gname, sep="")
       }
     rlang::inform(message=centertext(title))
     rlang::inform(message=paste0(centertext(Name), sep=""))
     }
   # If single.contrast is specified then:
-  # suppress table
-  # output list
-  # set rmc is FALSE
-  # notify user
   if (!is.na(single.contrast)) {
     if ((TRUE %in% is.na(g))) {
       single.contrast.title <- paste("\nComparisons limited to group number ",single.contrast," vs every other group",sep="")
@@ -335,7 +330,6 @@ dunn.test <- function(
     if (length(g)==1) {
       g <- 1:k
       }
-  
     # Replication loop for >7 groups, no wrap
     if (wrap==FALSE) {
       if (k > 7) {
@@ -346,27 +340,27 @@ dunn.test <- function(
           # Table body
           for (i in (colstart+1):k) {
             colstop <- min(i-1,6*rep)
-            dunntestztable(g,i,Z,colstart,colstop)
+            dunntestztable(g, i, Z, colstart, colstop)
             if (i < k) {
-              dunntestptable(i,P.adjust,colstart,colstop,Reject,0)
+              dunntestptable(i, P.adjust, colstart, colstop, Reject, 0)
               }
              else {
-              dunntestptable(i,P.adjust,colstart,colstop,Reject,1)
+              dunntestptable(i, P.adjust, colstart, colstop, Reject, 1)
               }
             }
           }
         # End of table
         if (laststart < k) {
-          dunntestheader(g,laststart,kminusone,rmc)
+          dunntestheader(g, laststart, kminusone, rmc)
           # Table body
           for (i in (laststart+1):k) {
           	colstop <- i-1
-            dunntestztable(g,i,Z,laststart,colstop) 
+            dunntestztable(g, i, Z, laststart, colstop) 
             if (i < k) {
-              dunntestptable(i,P.adjust,laststart,colstop,Reject,0)
+              dunntestptable(i, P.adjust, laststart, colstop, Reject, 0)
               }
              else {
-              dunntestptable(i,P.adjust,laststart,colstop,Reject,1)
+              dunntestptable(i, P.adjust, laststart, colstop, Reject, 1)
               }
             }
           }
@@ -374,16 +368,16 @@ dunn.test <- function(
   
       # Replication loop for <=7 groups
       if (k <= 7) {
-        dunntestheader(g,1,kminusone,rmc)
+        dunntestheader(g, 1, kminusone, rmc)
         # Table body
         for (i in 2:k) {
           colstop <- i-1
-          dunntestztable(g,i,Z,1,colstop) 
+          dunntestztable(g, i, Z, 1, colstop) 
           if (i < k) {
-            dunntestptable(i,P.adjust,1,colstop,Reject,0)
+            dunntestptable(i, P.adjust, 1, colstop, Reject, 0)
             }
            else {
-            dunntestptable(i,P.adjust,1,colstop,Reject,1)
+            dunntestptable(i, P.adjust, 1, colstop, Reject, 1)
             }
           }
         }
@@ -395,12 +389,12 @@ dunn.test <- function(
       # Table body
       for (i in 2:k) {
         colstop <- i-1
-        dunntestztable(g,i,Z,1,colstop) 
+        dunntestztable(g, i, Z, 1, colstop) 
         if (i < k) {
-          dunntestptable(i,P.adjust,1,colstop,Reject,0)
+          dunntestptable(i, P.adjust, 1, colstop, Reject, 0)
           }
          else {
-          dunntestptable(i,P.adjust,1,colstop,Reject,1)
+          dunntestptable(i, P.adjust, 1, colstop, Reject, 1)
           }
         }
       }
@@ -422,7 +416,7 @@ dunn.test <- function(
   if (list==TRUE) {
     groupvalues  <- levels(factor(g))
     # get the lengths of each group name (whether explicitly labeled or not)
-    sort(unlist(lapply(groupvalues,nchar))) -> lengths
+    lengths <- sort(unlist(lapply(groupvalues, nchar)))
     # stringlength will be the sum of the two largest values in lengths plus 6
     stringlength <- lengths[length(lengths)] + lengths[length(lengths)-1] + 6
 
@@ -463,9 +457,9 @@ dunn.test <- function(
             rlang::inform(message=paste0(labeli," - ",labelj,paste0(rep(" ",buffer), collapse="")," \U2502 ",zformat(Z[index]), " ",pformatted, sep=""))
             }
           }
-        }
-      }
-    }
+        }        # Close for (j in...)
+      }        # Close for (in in...)
+    }        # Close if (list==TRUE)
 
   # Manage interpretation output
   symbol <- "\U03B1"
