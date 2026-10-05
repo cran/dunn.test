@@ -1,7 +1,7 @@
 # Perform Dunn's test of multiple comparisons using rank sums
 # Version: 1.4.1
 # Author: Alexis Dinno
-# Date: June 4, 2026
+# Date: September 15, 2026
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
@@ -174,7 +174,7 @@ dunn.test <- function(
     }
   # validate that g is a vector of mode = character or mode = integer.
   if (length(g) > 1 & is.vector(g) ) {
-    if ( !is.vector(g, mode="character") & !all.integers(g) ) {
+    if ( !is.vector(g, mode="character") & !all_integers(g) ) {
       rlang::abort(message="g must be a factor, character vector, or integer vector.")
       }
     }
@@ -184,7 +184,7 @@ dunn.test <- function(
   
   out <- NULL
   if (xaslist & length(g)==1) {
-   kwallis.test(x, 1:length(x)) -> out
+    kwallis.test(x, 1:length(x)) -> out
     }
   if (length(g)>1 & xaslist) {
     kwallis.test(x, g) -> out
@@ -197,32 +197,32 @@ dunn.test <- function(
     rlang::inform(message=paste0("  Kruskal-Wallis rank sum test\n\ndata: ", xname, " and ", gname, sep=""))
     rlang::inform(message=out$output)
     }
-    chi2 <- out$H
-    df   <- out$df
-    p    <- out$p
-    N    <- out$N
-    Data <- out$Data
-    k    <- df+1
-    if (is.na(single.contrast)) {
-      m    <- k*(k-1)/2
-      }
-    if (!is.na(single.contrast)) {
-      m    <- k-1
-      }
-    Z <- rep(0,m)
-    P    <- rep(NA,m)
+  chi2 <- out$H
+  df   <- out$df
+  p    <- out$p
+  N    <- out$N
+  Data <- out$Data
+  k    <- df+1
+  if (is.na(single.contrast)) {
+    m <- k*(k-1)/2
+    }
+  if (!is.na(single.contrast)) {
+    m <- k-1
+    }
+  Z <- rep(0,m)
+  P <- rep(NA,m)
 
   # Prepare to modify behavior if single.contrast has been specified
   if (!is.na(single.contrast)) {
     table <- FALSE
-    list <- TRUE
-    rmc <- FALSE
+    list  <- TRUE
+    rmc   <- FALSE
     }
 
   #calculate ties adjustment to be used in pooled variance estimate later
   ranks <- Data[,4]
-  ties <- tiedranks(ranks)
-  r <- length(ties)
+  ties  <- tiedranks(ranks)
+  r     <- length(ties)
   tiesadj <- 0
   if (r > 0) {
     for (s in 1:r) {
@@ -243,6 +243,7 @@ dunn.test <- function(
     }
 
   # Calculate approximate Z test statistics
+  # If for all pairwise comparisons...
   if (is.na(single.contrast)) {
     for (i in 2:k) {
       for (j in 1:(i-1)) {
@@ -251,9 +252,9 @@ dunn.test <- function(
         meanranki <- mean(as.numeric(Data[,4][Data[,3]==unique(Data[,3])[i]]))
         meanrankj <- mean(as.numeric(Data[,4][Data[,3]==unique(Data[,3])[j]]))
         if (rmc==TRUE) {
-         z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
+          z <- (meanranki - meanrankj) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
           }
-         else {
+        if (rmc==FALSE) {
           z <- (meanrankj - meanranki) / sqrt( ((N*(N+1)/12) - tiesadj) * ((1/nj) + (1/ni)) )
           }
         index <- ((i-2)*(i-1)/2) + j
@@ -261,9 +262,9 @@ dunn.test <- function(
         }
       }        # Close for (i in 2:k)
     }        # Close if (is.na(single.contrast))
+   # Calculate comparisons only between the group in single.comparison and
+   # each remaining group
    else {
-    # Calculate comparisons only between the group in single.comparison and
-    # each remaining group
     for (j in 1:k) {
       if (single.index != j) {
         jindex <- j
@@ -291,7 +292,7 @@ dunn.test <- function(
    else {
    	P <- 2*pnorm(abs(Z), lower.tail=FALSE)
    	}
-  #calculate adjusted p-values based on method argument
+  #Calculate adjusted p-values based on method argument
   MCA <- multiple_comparisons_adjustment(P=P, m=m, method=method, alpha=alpha, altp=altp)
   P.adjust <- MCA$P.adjust
   Reject <- MCA$Reject
@@ -330,6 +331,7 @@ dunn.test <- function(
     if (length(g)==1) {
       g <- 1:k
       }
+
     # Replication loop for >7 groups, no wrap
     if (wrap==FALSE) {
       if (k > 7) {
@@ -519,10 +521,10 @@ dunn.test <- function(
      
   # If p = P(Z <= |z|)
   if (altp==FALSE) {
-   invisible(list(chi2=chi2, Z=Z, P=P, P.adjusted=P.adjust, comparisons=comparisons))
-   }
+    invisible(list(chi2=chi2, Z=Z, P=P, P.adjusted=P.adjust, comparisons=comparisons))
+    }
    # Otherwise, if p = P(|Z| <= |z|)
    else {
-   invisible(list(chi2=chi2, Z=Z, altP=P, altP.adjusted=P.adjust, comparisons=comparisons))
-   }
+    invisible(list(chi2=chi2, Z=Z, altP=P, altP.adjusted=P.adjust, comparisons=comparisons))
+    }
   }

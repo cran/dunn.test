@@ -1,5 +1,5 @@
 # kwallis.test: a custom Kruskal Wallis test function to support dunn.test
-# Date: June 5, 2026
+# Date: September 15, 2026
 kwallis.test <- function(x=NA, g=NA) {
 
   #set up data by lists
@@ -37,6 +37,7 @@ kwallis.test <- function(x=NA, g=NA) {
     Data[,3] <- g
     Data[,4] <- rank(Data[,2], ties.method="average", na.last=NA)
     }
+  # k is number of groups
   k <- length(unique(Data[,3]))
   #calculate ties adjustment
   ranks <- Data[,4]

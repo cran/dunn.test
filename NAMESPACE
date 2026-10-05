@@ -1,7 +1,6 @@
 # Import non-base functions from standard packages
 importFrom("stats", "pchisq", "pnorm")
 importFrom("utils", "data", "tail")
-importFrom("scrutiny", "is_numeric_like")
 
 # Export only these specific names (do not export helper functions)
 export("dunn.test")
