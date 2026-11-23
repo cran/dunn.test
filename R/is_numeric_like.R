@@ -1,4 +1,4 @@
-# Lukas  Jung, maintainer of the scrutiny package encouraged me to incporate the 
+# Lukas  Jung, maintainer of the scrutiny package encouraged me to incorporate the 
 # source of the is_numeric_like() function from package scrutiny, writing on 
 # 10/04/2026:
 #

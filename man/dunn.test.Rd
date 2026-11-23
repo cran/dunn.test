@@ -109,7 +109,7 @@ Please contact me with any questions, bug reports or suggestions for improvement
 Dinno, A. (2026) \code{dunn.test} version 1.4.0: Dunn's test of multiple comparisons using rank sums. R software package. URL: \url{https://cran.r-project.org/package=dunn.test}.}
 
 \subsection{See also}{
-\code{dunn.test} is also available for Stata as \href{https://alexisdinno.com/stata/dunntest.html}{dunntest}.
+\code{dunn.test} is also available for Stata as \href{https://alexisdinno.com/stata/dunntest.shtml}{dunntest}.
 }
 }
 \references{

@@ -1,14 +1,14 @@
-5f3758f7e1de127c8416fa5a39704b9c *DESCRIPTION
+2691d0735d66500259b23abefd186bd1 *DESCRIPTION
 50970617f3adee3c2eb4c6f819a4e96a *NAMESPACE
 fbcf42fa65ddcf750e3b745ed14a562f *R/all_integers.R
 b91d661b4ac78c32e39fb3f2726a1b3f *R/alphabetize.factor.R
 0061a350896b10c5f438ef1c21c349d7 *R/centertext.R
-c8b9dac2b2bf3aee08b1803c6fdf2630 *R/dunn.test.R
+f9178113b06096da9eeb3481bbf6fd20 *R/dunn.test.R
 a580dd55267fc9b47b43bc2ab9173576 *R/dunntestheader.R
 3862292171c06efa52c790a4b632b446 *R/dunntestptable.R
 3465f4211ef661fa0118049585e67dbe *R/dunntestztable.R
 cc638784c85cfea452372c308d7f084d *R/get_order.R
-beac7e4e80c50f5f5a5074153d5262a2 *R/is_numeric_like.R
+89b9f30107be49571054fddd012fe99f *R/is_numeric_like.R
 271f2b1bcfcfbdf4e69e2f83a3164530 *R/kwallis.test.R
 b56699ffbe882a0abc0f4d21beff229e *R/multiple_comparisons_adjustment.R
 c7c32ca1ce009801c91fe3f3cd19d3d1 *R/pad.left.R
@@ -16,7 +16,7 @@ c7c32ca1ce009801c91fe3f3cd19d3d1 *R/pad.left.R
 47950a93f1e485035134bd00d7266df7 *R/tiedranks.R
 1ee5a6c1140f30be4ee9a0efe32e9fa4 *R/tpad.R
 c0e2b0e15a887e3e0b903e461ed3e1b2 *R/zformat.R
-21c9401b8c07f38d762ade4612fc4ffe *build/partial.rdb
+29cf7d47d34a2b0e7ae0e2046f2d132b *build/partial.rdb
 d1ea6b6637e88fbc089cbc0f742b1518 *data/homecare.rda
-74585d71012e0534623a8b200ff633a7 *man/dunn.test.Rd
+a25549333b6cf87c0c8c29cce1e0d416 *man/dunn.test.Rd
 dfbecd34610254733ec464d265825aa5 *man/homecare.Rd

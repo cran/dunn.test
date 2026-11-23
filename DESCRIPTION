@@ -1,6 +1,6 @@
 Package: dunn.test
-Version: 1.4.2
-Date: 2026-10-4
+Version: 1.4.3
+Date: 2026-11-20
 Title: Dunn's Test of Multiple Comparisons Using Rank Sums
 Authors@R: c(person(given = "Alexis", family ="Dinno", role = c("aut", "cre", "cph"), email = "alexis.dinno@pdx.edu", comment = c(ORCID = "0000-0003-2560-310X")))
 Imports: rlang
@@ -9,9 +9,9 @@ License: GPL-2
 LazyData: true
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2026-10-04 21:49:21 UTC; alexis
+Packaged: 2026-11-21 20:07:58 UTC; alexis
 Author: Alexis Dinno [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0003-2560-310X>)
 Maintainer: Alexis Dinno <alexis.dinno@pdx.edu>
 Repository: CRAN
-Date/Publication: 2026-10-05 02:20:09 UTC
+Date/Publication: 2026-11-23 17:40:02 UTC

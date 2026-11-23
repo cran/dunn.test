@@ -1,7 +1,7 @@
 # Perform Dunn's test of multiple comparisons using rank sums
-# Version: 1.4.1
+# Version: 1.4.3
 # Author: Alexis Dinno
-# Date: September 15, 2026
+# Date: November 20, 2026
 
 p.adjustment.methods <- c("none","bonferroni","sidak","holm","hs","hochberg","bh","by")
 
@@ -28,6 +28,25 @@ dunn.test <- function(
   gname <- paste(if(is.name(substitute(g))) {deparse(substitute(g))} else {"group"})
   xaslist <- is.list(x)
   tempg <- 1:length(x)
+
+  # validate that g is factor or vector.
+  if (length(g) > 1 & ( !is.factor(g) & !is.vector(g) ) ) {
+    rlang::abort(message="g must be a factor, character vector, or integer vector.")
+    }()
+  # validate that g is a vector of mode = character or mode = integer.
+  if (length(g) > 1 & is.vector(g) ) {
+    if ( !is.vector(g, mode="character") & !all_integers(g) ) {
+      rlang::abort(message="g must be a factor, character vector, or integer vector.")
+      }
+    }
+  # Convert g to a factor variable if it is provided as a vector of strings
+  if (is.vector(g, mode="character")) {
+    g <- factor(g, levels=unique(g))
+    }
+  # Convert g to a factor variable if it is provided as a vector of integers
+  if (all_integers(g)) {
+    g <- factor(g, levels=unique(g))
+    }
 
   # casewise deletion of missing data
   # Start dealing with the fact that g may be numeric, string, or factor data
@@ -167,16 +186,6 @@ dunn.test <- function(
   # validate that g is not NA
   if (length(g) > 1 & TRUE %in% (FALSE %in% !is.na(g)) ) {
     rlang::abort(message="g must have no missing values.")
-    }
-  # validate that g is factor or vector.
-  if (length(g) > 1 & ( !is.factor(g) & !is.vector(g) ) ) {
-    rlang::abort(message="g must be a factor, character vector, or integer vector.")
-    }
-  # validate that g is a vector of mode = character or mode = integer.
-  if (length(g) > 1 & is.vector(g) ) {
-    if ( !is.vector(g, mode="character") & !all_integers(g) ) {
-      rlang::abort(message="g must be a factor, character vector, or integer vector.")
-      }
     }
 
   ##########
